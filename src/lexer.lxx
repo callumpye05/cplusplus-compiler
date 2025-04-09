@@ -1,0 +1,87 @@
+/**
+ * \file lexer.lxx
+ * \brief Implementation of a lexer for the algo language
+ * \author Matthieu Perrin 
+ * \version 1
+ * \date 17-02-2025
+ */
+
+%option nounput
+%option noyywrap
+
+%{
+#include "ast.hpp"
+#include "parser.hpp"
+%}
+
+%%
+
+ /* Removal of characters that should not be parsed */
+[ \t\n]                  { /* Spaces */ }
+\/\/.*                   { /* One-line comments */ }
+\/\*([^\*]|\*[^\/])*\*\/ { /* Multi-line comments */ }
+
+ /* Operators and keywords of the ALGO language */
+"algorithme"   return ALGORITHME;
+"variables"    return VARIABLES;
+"début"	       return DEBUT;
+"fin"	       return FIN;
+"("            return PARENTHESE_G;
+")"	       return PARENTHESE_D;
+"["            return CROCHET_G;
+"]"	       return CROCHET_D;
+";"	       return PT_VIRGULE;
+":"	       return DEUX_POINTS;
+"<-"	       return AFFECTATION;
+"+"	       return PLUS;
+"-"	       return MOINS;
+"*"	       return MULTIPLIE;
+"="	       return EGAL;
+"<"	       return INFERIEUR;
+"et"	       return ET;
+"ou"	       return OU;
+"si"	       return SI;
+"alors"	       return ALORS;
+"sinon"	       return SINON;
+"sinonsi" { std::cerr << "lexer: Found 'sinonsi' (SINON SI)\n"; return SINONSI; } 
+"tant"	       return TANT;
+"que"	       return QUE;
+"faire"	       return FAIRE;
+"écrire"       return ECRIRE;
+"lire"	       return LIRE;
+"longueur"     return LONGUEUR;
+"non"    { std::cerr << "lexer: Found 'non' (NON)\n"; return NON; }     /* AFFICHAGE POUR DEBUG */
+","      { std::cerr << "lexer: Found ',' (VIRGULE)\n"; return VIRGULE; }  
+"pour"   { std::cerr << "lexer: Found 'pour' (POUR)\n"; return POUR; } 
+"allant" { std::cerr << "lexer: Found 'allant' (ALLANT)\n"; return ALLANT; } 
+"de"     { std::cerr << "lexer: Found 'de' (DE)\n"; return DE; }  
+"à"      { std::cerr << "lexer: Found 'à' (A)\n"; return A; }  
+"avec"   { std::cerr << "lexer: Found 'avec' (AVEC)\n"; return AVEC; } 
+"un"     { std::cerr << "lexer: Found 'un' (UN)\n"; return UN; } 
+"pas"    { std::cerr << "lexer: Found 'pas' (PAS)\n"; return PAS; } 
+"tableau" { std::cerr << "lexer: Found 'tableau' (TABLEAU_TYPE)\n"; return TABLEAU_TYPE; }
+"tab" 	 { std::cerr << "lexer: Found 'tab' (TAB)\n"; return TAB; }
+"Tableau" { std::cerr << "lexer: Found 'Tableau' (TABLEAU_CONSTRUCTEUR)\n"; return TABLEAU_CONSTRUCTEUR; }
+
+ /* Type names */
+"booléen"                { yylval.type=algo_types::BOOLEAN;                               return TYPE; }
+"entier"                 { yylval.type=algo_types::INTEGER;                               return TYPE; }
+"caractère"              { yylval.type=algo_types::CHARACTER;                             return TYPE; }
+"chaîne"                 { yylval.type=algo_types::STRING;                                return TYPE; }
+
+ /* Booleans */
+"vrai"	                 { yylval.expression=new Literal(algo_types::BOOLEAN, "true");    return LITTERAL; }
+"faux"			 { yylval.expression=new Literal(algo_types::BOOLEAN, "false");   return LITTERAL; }
+
+ /* Integers */
+"0"|[1-9][0-9]*		 { yylval.expression=new Literal(algo_types::INTEGER, yytext);    return LITTERAL; }
+
+ /* Characters */
+\'([^\'\\]|\\.)\'	 { yylval.expression=new Literal(algo_types::CHARACTER, yytext);  return LITTERAL; }
+
+ /* Strings */
+\"([^\"\\]|\\.)*\"	 { yylval.expression=new Literal(algo_types::STRING, std::string("std::string(") + yytext + ")");     return LITTERAL; }
+
+ /* Identifiers (used as language names) */
+[A-Za-z][A-Za-z_0-9]*	 { yylval.identifier=new std::string(yytext);			  return ID; }
+

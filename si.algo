@@ -1,0 +1,45 @@
+
+algorithme // Comptage des "si"
+variables 
+	i : entier 
+	cpt : entier 
+	mot : chaîne 
+	vuS : booléen 
+	c : caractère 
+début
+	lire mot;
+	cpt <- 0;
+	i <- 0;
+	
+	tant que i<longueur(mot) faire
+		c <- mot[i+1];
+		si c='s' alors
+			vuS <- vrai;
+		sinonsi c='e' alors
+			vuS <- vrai;
+		sinonsi c='p' alors
+			vuS <- faux;
+		
+		sinon 
+			si  vuS et c='i' alors 
+				cpt <- cpt + 1;
+				vuS <- faux;
+				
+			sinon 
+				vuS <- faux;
+			fin si
+		fin si
+		i <- i+1;
+	fin tant que 
+	écrire("test1 "," test2");
+	pour i allant de 1 à 3 faire
+		écrire("ça marche");
+	fin pour
+	écrire("Il y a ");
+	écrire(cpt);
+	écrire(" \"si\" dans la chaîne \"");
+	écrire(mot);
+	écrire("\".\n");
+fin
+
+

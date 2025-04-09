@@ -1,0 +1,26 @@
+
+algorithme // Comptage des "si"
+variables 
+	i : entier 
+	cpt : entier 
+	mot : chaîne 
+	vuS : booléen 
+	c : caractère 
+début
+	lire mot;
+	cpt <- 0;
+	pour i allant de 1 à longueur(mot) faire
+		c <- mot[i+1];
+		si c='s' alors
+			vuS <- vrai;
+		sinonsi vuS et c='i' alors 
+			cpt <- cpt + 1;
+			vuS <- faux;
+		sinon 
+			vuS <- faux;
+		fin si
+	fin pour
+	écrire("Il y a ", cpt, " \"si\" dans la chaîne \"", mot, "\".");
+fin
+
+

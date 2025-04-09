@@ -1,0 +1,181 @@
+/**
+ * \file parser.yxx
+ * \brief Implementation of a parser grammar for the algo language
+ * \author Matthieu Perrin 
+ * \version 1
+ * \date 17-02-2025
+ */
+
+%{
+#include "ast.hpp"
+extern FILE *yyin;
+Program* program;
+int yyparse();
+int yylex (void);
+void yyerror (char const *);
+std::vector<std::pair<const Expression*, const Instruction*>>
+convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
+    std::vector<std::pair<const Expression*, const Instruction*>> result;
+    for (const auto& p : vec) {
+        // Assuming Sequence is convertible to Instruction
+        result.push_back({ p.first, p.second });
+    }
+    return result;
+}
+
+%}
+
+// Tokens used to communicate between the lexer and the parser
+// Returned by the lexer, and used as terminal symbols by the parser
+%token  ALGORITHME VARIABLES TYPE DEBUT FIN
+%token  SI ALORS SINON TANT QUE POUR FAIRE ALLANT DE AVEC UN PAS A SINONSI 
+%token  AFFECTATION PT_VIRGULE DEUX_POINTS PARENTHESE_G PARENTHESE_D CROCHET_G CROCHET_D VIRGULE
+%token  PLUS MOINS MULTIPLIE ET OU EGAL INFERIEUR
+%token  LITTERAL ID ECRIRE LONGUEUR LIRE NON
+
+%right ALORS
+%left SINON 
+%left SINONSI // Ensure SINONSI gets a higher precedence
+
+			
+// Declaration of the types returned by the actions of the non-terminals
+%union {
+    Instruction* instruction;
+    Expression* expression;
+    Sequence* sequence;
+    algo_types type;
+    std::string* identifier;
+    std::vector<Declaration*>* declaration;
+    std::vector<Expression*>* expression_list;
+    std::vector<std::pair<Expression*, Sequence*>>* elseIfList;  
+}
+
+%type <instruction> commande
+%type <expression> LITTERAL expression disjonction conjonction comparison somme produit oppose indice terme negation
+%type <sequence> sequence 
+%type <type> TYPE
+%type <identifier> ID
+%type <declaration> var_declaration
+%type <expression_list> expression_list
+%type <sequence> opt_sinon
+%type <elseIfList> autres_conditions
+%type <elseIfList> opt_autres_conditions
+
+
+
+// Initial rule of the grammar
+%start algo
+
+%%
+
+algo:		ALGORITHME VARIABLES var_declaration DEBUT sequence FIN { program = new Program(*$3, $5); delete $3; }
+;
+
+var_declaration:                                                        { $$ = new std::vector<Declaration*>(); }
+	|	var_declaration ID DEUX_POINTS TYPE                     { $$ = $1; $$->push_back(new Declaration(*$2, $4)); delete $2; }
+;
+
+sequence:	                                                        { $$ = new Sequence(); }
+	|	sequence commande                                       { $$ = $1; $$->instructions.push_back($2); }
+;
+
+expression_list:
+    expression                              { $$ = new std::vector<Expression*>(); $$->push_back($1); }
+    | expression_list VIRGULE expression    { $$ = $1; $$->push_back($3); }
+;
+
+autres_conditions:
+    SINONSI expression ALORS sequence autres_conditions 
+    { 
+        if ($5 == nullptr) {
+            $5 = new std::vector<std::pair<Expression*, Sequence*>>();
+        }
+        $5->push_back(std::make_pair($2, $4));
+        $$ = $5;
+    }
+    | SINONSI expression ALORS sequence 
+    { 
+        $$ = new std::vector<std::pair<Expression*, Sequence*>>();
+        $$->push_back(std::make_pair($2, $4));
+    }
+;
+opt_autres_conditions:
+    autres_conditions { $$ = $1; }  // Clauses sinonsi présentes
+    | /* vide */      { $$ = new std::vector<std::pair<Expression*, Sequence*>>(); }  // Aucune clause sinonsi
+;
+
+opt_sinon:
+    SINON sequence { $$ = $2; }  // Bloc SINON présent
+    | /* vide */   { $$ = nullptr; }  // Pas de SINON
+;
+
+commande:
+    ID AFFECTATION expression PT_VIRGULE                { $$ = new Assignment(*$1, $3); delete $1; }
+    | ECRIRE PARENTHESE_G expression_list PARENTHESE_D PT_VIRGULE  { $$ = new Write(*$3); }
+    | LIRE ID PT_VIRGULE                               { $$ = new Read(*$2); delete $2; }
+    | SI expression ALORS sequence opt_autres_conditions opt_sinon FIN SI { $$ = new If($2, $4, convertElseIf(*$5), $6); }
+;
+    | TANT QUE expression FAIRE sequence FIN TANT QUE   { $$ = new While($3, $5); }
+    | POUR ID ALLANT DE expression A expression AVEC UN PAS DE expression FAIRE sequence FIN POUR { $$ = new For(*$2, $5, $7, $12, $14); } //ceci concerne indice choisit par utilisateur
+    | POUR ID ALLANT DE expression A expression FAIRE sequence FIN POUR { $$ = new For(*$2, $5, $7, new Literal(algo_types::INTEGER, "1") , $9); } 
+;
+
+expression: disjonction { std::cerr << "Parser: Processing expression\n"; $$ = $1; }
+;
+
+disjonction: disjonction OU conjonction { std::cerr << "Parser: Processing OU\n"; $$ = new BinaryOperation(BinaryOperation::OU, $1, $3); }
+           | conjonction { std::cerr << "Parser: Processing conjonction\n"; $$ = $1; }
+;
+
+conjonction: conjonction ET negation { std::cerr << "Parser: Processing ET\n"; $$ = new BinaryOperation(BinaryOperation::ET, $1, $3); }
+           | negation { std::cerr << "Parser: Processing negation\n"; $$ = $1; }
+;
+
+negation: NON negation { std::cerr << "Parser: Processing NON\n"; $$ = new UnaryOperation(UnaryOperation::NON, $2); }
+        | comparison { std::cerr << "Parser: Processing comparison\n"; $$ = $1; }
+;
+
+comparison:	somme EGAL somme				        { $$ = new BinaryOperation(BinaryOperation::EGAL, $1, $3); }
+	|	somme INFERIEUR somme				        { $$ = new BinaryOperation(BinaryOperation::INFERIEUR, $1, $3); }
+	|	somme						        { $$ = $1; }
+;
+
+somme:		somme PLUS produit				        { $$ = new BinaryOperation(BinaryOperation::PLUS, $1, $3); }
+	|	somme MOINS produit				        { $$ = new BinaryOperation(BinaryOperation::MOINS, $1, $3); }
+	|	produit						        { $$ = $1; }
+;
+
+produit:	produit MULTIPLIE terme				        { $$ = new BinaryOperation(BinaryOperation::FOIS, $1, $3); }
+	|	oppose						        { $$ = $1; }
+;
+
+oppose:		MOINS oppose					        { $$ = new UnaryOperation(UnaryOperation::MOINS, $2); }
+	|	indice				                        { $$ = $1; }
+;
+
+indice:		terme CROCHET_G expression CROCHET_D                    { $$ = new BinaryOperation(BinaryOperation::INDICE, $1, $3); }
+	|	terme					                { $$ = $1; }
+;
+
+
+terme:		LITTERAL				                { $$ = $1; }
+	|	ID				                        { $$ = new Identifier(*$1); delete $1;}
+	|	LONGUEUR PARENTHESE_G expression PARENTHESE_D           { $$ = new UnaryOperation(UnaryOperation::LONGUEUR, $3); }
+	|	PARENTHESE_G expression PARENTHESE_D                    { $$ = $2; }
+;
+
+%%
+
+void yyerror(const char *s) {
+  printf("%s\n",s);
+}
+
+int main(int, char *argv[]) {
+  yyin=fopen(argv[1],"r");
+  yyparse();
+
+  if(program && program->validate()) {
+      std::cout << program->cpp_code();
+      return 0;
+  } else return 1;
+}
