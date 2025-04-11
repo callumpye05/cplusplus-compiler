@@ -45,9 +45,12 @@ algo_types UnaryOperation::infer_type(const Program& context) const {
   }
   return algo_types::ERROR;
 }
-algo_types ArrayType::infer_type(const Program& program) const {
+/*
+ *algo_types ArrayType::infer_type(const Program& program) const {
   return algo_types::ARRAY;
 }
+ */
+/*
 bool is_array_type(const algo_types& type) {
   return std::holds_alternative<ArrayType>(type);
 }
@@ -95,7 +98,7 @@ algo_types ArrayLength::infer_type(const Program& program) const {
   
   return algo_types::INTEGER;
 }
-
+*/
 algo_types BinaryOperation::infer_type(const Program& context) const {
   algo_types left_type  = left->infer_type(context);
   algo_types right_type = right->infer_type(context);
@@ -138,15 +141,24 @@ algo_types BinaryOperation::infer_type(const Program& context) const {
     std::cerr << "Erreur : l'opérateur binaire < être utilisé avec des entiers" << std::endl;
     break;
 
-  case INDICE : 
-    if (is_array_type(left_type) && right_type == base_types::INTEGER) {
-      return get_array_element_type(left_type);
+   case INDICE : 
+    if(left_type.kind == algo_types::ARRAY) {
+        if(right_type == algo_types::INTEGER) {
+            if(left_type.parameters.empty()) {
+                std::cerr << "Erreur : type d'éléments du tableau non spécifié" << std::endl;
+                return algo_types::ERROR;
+            }
+            return left_type.parameters[0];
+        } else {
+            std::cerr << "Erreur : l'indice doit être un entier" << std::endl;
+        }
+    } else if(left_type == algo_types::STRING && right_type == algo_types::INTEGER) {
+        return algo_types::CHARACTER;
+    } else {
+        std::cerr << "Erreur : accès à un indice sur un non-tableau" << std::endl;
     }
-    if(left_type == algo_types::STRING && right_type == algo_types::INTEGER) return algo_types::CHARACTER;
-    std::cerr << "Erreur : l'opérateur binaire < être utilisé avec des entiers" << std::endl;
-    break;
-  }
-  return algo_types::ERROR;
+	}
+	return algo_types::ERROR;
 }
 
 /**********************************************************
@@ -163,13 +175,14 @@ bool Sequence::validate(const Program& context) const {
   }
   return true;
 }
-  
+ /*
 bool types_equal(const algo_types& a, const algo_types& b) {
   if (is_array_type(a) && is_array_type(b)) {
     return types_equal(get_array_element_type(a), get_array_element_type(b));
   }
   return a == b;
 }
+*/
 /*
 bool Assignment::validate(const Program& context) const {
   algo_types variable_type = context.infer_type(variable);
@@ -185,10 +198,9 @@ bool Assignment::validate(const Program& context) const {
     algo_types variable_type = context.infer_type(variable);
     algo_types expression_type = value->infer_type(context);
     
-    if (!types_equal(variable_type, expression_type)) {
+    if (variable_type !=  expression_type) {
         std::cerr << "Erreur : l'affectation de " << variable 
-                  << " n'est pas du bon type. Attendu: " << type_to_string(variable_type)
-                  << ", Trouvé: " << type_to_string(expression_type) << std::endl;
+                  << " n'est pas du bon type."<<std::endl;
         return false;
     }
     return true;

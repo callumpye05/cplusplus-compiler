@@ -88,7 +88,8 @@ extern int yydebug;
     ECRIRE = 294,
     LONGUEUR = 295,
     LIRE = 296,
-    NON = 297
+    NON = 297,
+    TABLEAU_TYPE = 298
   };
 #endif
 
@@ -96,18 +97,18 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 42 "src/parser.yxx"
+#line 43 "src/parser.yxx"
 
     Instruction* instruction;
     Expression* expression;
     Sequence* sequence;
-    algo_types type;
+    algo_types* type;
     std::string* identifier;
     std::vector<Declaration*>* declaration;
     std::vector<Expression*>* expression_list;
     std::vector<std::pair<Expression*, Sequence*>>* elseIfList;  
 
-#line 111 "build/gen/parser.hpp"
+#line 112 "build/gen/parser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;

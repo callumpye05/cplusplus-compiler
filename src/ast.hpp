@@ -17,31 +17,39 @@
 struct Program;
 
 // The set of types supported in an algo program
-enum class algo_types {
-  BOOLEAN,
-  INTEGER,
-  CHARACTER,
-  STRING,
-  ARRAY,
-  ERROR
-};
+struct algo_types {
 
+  enum type_kind {
+    BOOLEAN,
+    INTEGER,
+    CHARACTER,
+    STRING,
+    ARRAY,
+    ERROR
+  };
 
-struct ArrayType;
+  type_kind kind;
+  std::vector<algo_types> parameters;
 
-// A variant type that can represent both base types and array types
-using algo_types = std::variant<base_types, ArrayType>;
-
-// Represents an array type with its element type
-struct ArrayType {
-  algo_types element_type;
+  algo_types(type_kind kind) : kind(kind), parameters() {}
+  algo_types(type_kind kind, std::initializer_list<algo_types> parameters) : kind(kind), parameters(parameters) {}
   
-  ArrayType(algo_types element_type) : element_type(std::move(element_type)) {}
-  
-  bool operator==(const ArrayType& other) const {
-    return element_type == other.element_type;
+  bool operator==(const algo_types& other) const {
+    if (kind != other.kind) return false;
+    if (parameters.size() != other.parameters.size()) return false;
+    for(size_t i = 0; i<parameters.size(); i++)
+      if(!(parameters[i] == other.parameters[i]))
+	return false;
+    return true;
   }
+
+  bool operator!=(const algo_types& other) const {
+    return !(*this == other);
+  }
+
 };
+
+
 
 /*********************************
  *                               *
@@ -85,69 +93,6 @@ struct Literal : public Expression {
   std::string cpp_code() const override;
   algo_types infer_type(const Program&) const override;
 
-};
-
-struct ArrayType : public Expression {
-	
-		const algo_types type;  //le type du tableau
-		
-		ArrayType(algo_types type) 
-			:type(type){}
-		
-		 ~ArrayType() override = default;
-		 
-		 std::string cpp_code() const override;
-		 algo_types infer_type(const Program&) {
-			 return algo_types::ARRAY;
-			 
-		 }	
-};
-
-struct ArrayCreation : public Expression {
-	
-	const Expression* taille; // un Tableau a une taille fixe 
-	const algo_types type;
-	
-	ArrayCreation (const Expression* taille , const algo_types type)
-		:taille(taille) , type(type) {}
-	
-	~ArrayCreation() override {
-		delete taille;
-		
-	}
-	
-	 std::string cpp_code() const override;
-	 algo_types infer_type(const Program&) const override;
-};
-
-struct ArrayAccess : public Expression {
-	const Expression* tableau; //on declare le tableau qu'on souhaite y accéder 
-	const Expression* indice; //On accède a un tableau avec son indice 
-	
-	ArrayAccess ( const Expression* tableau , const Expression* indice) 
-		:tableau(tableau) , indice(indice) {}
-		
-	~ArrayAccess() override {
-		delete tableau;
-		delete indice;
-	}
-	std::string cpp_code() const override;
-	algo_types infer_type(const Program&) const override;
-};
-
-struct ArrayLength : public Expression {
-	const Expression* tableau; 
-	
-	ArrayLength( cnst Expression* tableau) 
-		:tableau(tableau) {}
-	
-	~ArrayLength() override {
-		delete tableau;
-	}
-	std::string cpp_code() const override;
-	algo_types infer_type(const Program&) const override;
-		
-	
 };
 
 /*
@@ -454,6 +399,33 @@ struct For: public Instruction {
 	}	
 	std::string cpp_code(const std::string&) const override;
 	bool validate(const Program&) const override;
+};
+
+struct ArrayCreation : public Expression {
+    Expression* taille;
+    ArrayCreation(Expression* taille) : taille(taille) {}
+    ~ArrayCreation() override { if(taille) delete taille; }
+    std::string cpp_code() const override;
+    algo_types infer_type(const Program&) const override;
+};
+
+// Pour l'accès aux tableaux
+struct ArrayAccess : public Expression {
+    Expression* tableau;
+    Expression* indice;
+    ArrayAccess(Expression* tableau, Expression* indice) : tableau(tableau), indice(indice) {}
+    ~ArrayAccess() override { 
+        if(tableau) delete tableau; 
+        if(indice) delete indice;
+    }
+    std::string cpp_code() const override;
+    algo_types infer_type(const Program&) const override;
+};
+
+// Pour la longueur des tableaux
+struct ArrayLength : public UnaryOperation {
+    ArrayLength(Expression* tableau) : UnaryOperation(LONGUEUR, tableau) {}
+    algo_types infer_type(const Program&) const override;
 };
 
 

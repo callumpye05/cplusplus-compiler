@@ -85,7 +85,7 @@ convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
 }
 
 
-#line 89 "build/gen/parser.cpp"
+#line 89 "parser.tab.cxx"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -116,10 +116,7 @@ convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
 # define YYERROR_VERBOSE 0
 #endif
 
-/* Use api.header.include to #include this header
-   instead of duplicating it here.  */
-#ifndef YY_YY_BUILD_GEN_PARSER_HPP_INCLUDED
-# define YY_YY_BUILD_GEN_PARSER_HPP_INCLUDED
+
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -192,7 +189,7 @@ union YYSTYPE
     std::vector<Expression*>* expression_list;
     std::vector<std::pair<Expression*, Sequence*>>* elseIfList;  
 
-#line 196 "build/gen/parser.cpp"
+#line 193 "parser.tab.cxx"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -205,7 +202,7 @@ extern YYSTYPE yylval;
 
 int yyparse (void);
 
-#endif /* !YY_YY_BUILD_GEN_PARSER_HPP_INCLUDED  */
+
 
 
 
@@ -1456,13 +1453,13 @@ yyreduce:
   case 2:
 #line 72 "src/parser.yxx"
                                                                         { program = new Program(*(yyvsp[-3].declaration), (yyvsp[-1].sequence)); delete (yyvsp[-3].declaration); }
-#line 1460 "build/gen/parser.cpp"
+#line 1457 "parser.tab.cxx"
     break;
 
   case 3:
 #line 82 "src/parser.yxx"
     { (yyval.declaration) = new std::vector<Declaration*>(); }
-#line 1466 "build/gen/parser.cpp"
+#line 1463 "parser.tab.cxx"
     break;
 
   case 4:
@@ -1474,43 +1471,43 @@ yyreduce:
         delete (yyvsp[-2].identifier); // Free the string
         delete (yyvsp[0].type); // Free the algo_types allocated by lexer
     }
-#line 1478 "build/gen/parser.cpp"
+#line 1475 "parser.tab.cxx"
     break;
 
   case 5:
 #line 93 "src/parser.yxx"
          { (yyval.type) = (yyvsp[0].type); }
-#line 1484 "build/gen/parser.cpp"
+#line 1481 "parser.tab.cxx"
     break;
 
   case 6:
 #line 94 "src/parser.yxx"
                              { (yyval.type) = new algo_types(algo_types::ARRAY, {*(yyvsp[0].type)}); delete (yyvsp[0].type); }
-#line 1490 "build/gen/parser.cpp"
+#line 1487 "parser.tab.cxx"
     break;
 
   case 7:
 #line 97 "src/parser.yxx"
                                                                         { (yyval.sequence) = new Sequence(); }
-#line 1496 "build/gen/parser.cpp"
+#line 1493 "parser.tab.cxx"
     break;
 
   case 8:
 #line 98 "src/parser.yxx"
                                                                         { (yyval.sequence) = (yyvsp[-1].sequence); (yyval.sequence)->instructions.push_back((yyvsp[0].instruction)); }
-#line 1502 "build/gen/parser.cpp"
+#line 1499 "parser.tab.cxx"
     break;
 
   case 9:
 #line 102 "src/parser.yxx"
                                             { (yyval.expression_list) = new std::vector<Expression*>(); (yyval.expression_list)->push_back((yyvsp[0].expression)); }
-#line 1508 "build/gen/parser.cpp"
+#line 1505 "parser.tab.cxx"
     break;
 
   case 10:
 #line 103 "src/parser.yxx"
                                             { (yyval.expression_list) = (yyvsp[-2].expression_list); (yyval.expression_list)->push_back((yyvsp[0].expression)); }
-#line 1514 "build/gen/parser.cpp"
+#line 1511 "parser.tab.cxx"
     break;
 
   case 11:
@@ -1522,7 +1519,7 @@ yyreduce:
         (yyvsp[0].elseIfList)->push_back(std::make_pair((yyvsp[-3].expression), (yyvsp[-1].sequence)));
         (yyval.elseIfList) = (yyvsp[0].elseIfList);
     }
-#line 1526 "build/gen/parser.cpp"
+#line 1523 "parser.tab.cxx"
     break;
 
   case 12:
@@ -1531,233 +1528,233 @@ yyreduce:
         (yyval.elseIfList) = new std::vector<std::pair<Expression*, Sequence*>>();
         (yyval.elseIfList)->push_back(std::make_pair((yyvsp[-2].expression), (yyvsp[0].sequence)));
     }
-#line 1535 "build/gen/parser.cpp"
+#line 1532 "parser.tab.cxx"
     break;
 
   case 13:
 #line 122 "src/parser.yxx"
                       { (yyval.elseIfList) = (yyvsp[0].elseIfList); }
-#line 1541 "build/gen/parser.cpp"
+#line 1538 "parser.tab.cxx"
     break;
 
   case 14:
 #line 123 "src/parser.yxx"
                       { (yyval.elseIfList) = new std::vector<std::pair<Expression*, Sequence*>>(); }
-#line 1547 "build/gen/parser.cpp"
+#line 1544 "parser.tab.cxx"
     break;
 
   case 15:
 #line 127 "src/parser.yxx"
                    { (yyval.sequence) = (yyvsp[0].sequence); }
-#line 1553 "build/gen/parser.cpp"
+#line 1550 "parser.tab.cxx"
     break;
 
   case 16:
 #line 128 "src/parser.yxx"
                    { (yyval.sequence) = nullptr; }
-#line 1559 "build/gen/parser.cpp"
+#line 1556 "parser.tab.cxx"
     break;
 
   case 17:
 #line 132 "src/parser.yxx"
                                                         { (yyval.instruction) = new Assignment(*(yyvsp[-3].identifier), (yyvsp[-1].expression)); delete (yyvsp[-3].identifier); }
-#line 1565 "build/gen/parser.cpp"
+#line 1562 "parser.tab.cxx"
     break;
 
   case 18:
 #line 133 "src/parser.yxx"
                                                                    { (yyval.instruction) = new Write(*(yyvsp[-2].expression_list)); }
-#line 1571 "build/gen/parser.cpp"
+#line 1568 "parser.tab.cxx"
     break;
 
   case 19:
 #line 134 "src/parser.yxx"
                                                        { (yyval.instruction) = new Read(*(yyvsp[-1].identifier)); delete (yyvsp[-1].identifier); }
-#line 1577 "build/gen/parser.cpp"
+#line 1574 "parser.tab.cxx"
     break;
 
   case 20:
 #line 135 "src/parser.yxx"
                                                                           { (yyval.instruction) = new If((yyvsp[-6].expression), (yyvsp[-4].sequence), convertElseIf(*(yyvsp[-3].elseIfList)), (yyvsp[-2].sequence)); }
-#line 1583 "build/gen/parser.cpp"
+#line 1580 "parser.tab.cxx"
     break;
 
   case 21:
 #line 137 "src/parser.yxx"
                                                         { (yyval.instruction) = new While((yyvsp[-5].expression), (yyvsp[-3].sequence)); }
-#line 1589 "build/gen/parser.cpp"
+#line 1586 "parser.tab.cxx"
     break;
 
   case 22:
 #line 138 "src/parser.yxx"
                                                                                                   { (yyval.instruction) = new For(*(yyvsp[-14].identifier), (yyvsp[-11].expression), (yyvsp[-9].expression), (yyvsp[-4].expression), (yyvsp[-2].sequence)); }
-#line 1595 "build/gen/parser.cpp"
+#line 1592 "parser.tab.cxx"
     break;
 
   case 23:
 #line 139 "src/parser.yxx"
                                                                         { (yyval.instruction) = new For(*(yyvsp[-9].identifier), (yyvsp[-6].expression), (yyvsp[-4].expression), new Literal(algo_types::INTEGER, "1") , (yyvsp[-2].sequence)); }
-#line 1601 "build/gen/parser.cpp"
+#line 1598 "parser.tab.cxx"
     break;
 
   case 24:
 #line 142 "src/parser.yxx"
                         { std::cerr << "Parser: Processing expression\n"; (yyval.expression) = (yyvsp[0].expression); }
-#line 1607 "build/gen/parser.cpp"
+#line 1604 "parser.tab.cxx"
     break;
 
   case 25:
 #line 143 "src/parser.yxx"
                                                             { (yyval.expression) = new ArrayCreation((yyvsp[-1].expression)); }
-#line 1613 "build/gen/parser.cpp"
+#line 1610 "parser.tab.cxx"
     break;
 
   case 26:
 #line 144 "src/parser.yxx"
                                                            { (yyval.expression) = new UnaryOperation(UnaryOperation::LONGUEUR, (yyvsp[-1].expression)); }
-#line 1619 "build/gen/parser.cpp"
+#line 1616 "parser.tab.cxx"
     break;
 
   case 27:
 #line 145 "src/parser.yxx"
                                                        { (yyval.expression) = new ArrayAccess((yyvsp[-3].expression), (yyvsp[-1].expression)); }
-#line 1625 "build/gen/parser.cpp"
+#line 1622 "parser.tab.cxx"
     break;
 
   case 28:
 #line 149 "src/parser.yxx"
                                         { std::cerr << "Parser: Processing OU\n"; (yyval.expression) = new BinaryOperation(BinaryOperation::OU, (yyvsp[-2].expression), (yyvsp[0].expression)); }
-#line 1631 "build/gen/parser.cpp"
+#line 1628 "parser.tab.cxx"
     break;
 
   case 29:
 #line 150 "src/parser.yxx"
                          { std::cerr << "Parser: Processing conjonction\n"; (yyval.expression) = (yyvsp[0].expression); }
-#line 1637 "build/gen/parser.cpp"
+#line 1634 "parser.tab.cxx"
     break;
 
   case 30:
 #line 153 "src/parser.yxx"
                                      { std::cerr << "Parser: Processing ET\n"; (yyval.expression) = new BinaryOperation(BinaryOperation::ET, (yyvsp[-2].expression), (yyvsp[0].expression)); }
-#line 1643 "build/gen/parser.cpp"
+#line 1640 "parser.tab.cxx"
     break;
 
   case 31:
 #line 154 "src/parser.yxx"
                       { std::cerr << "Parser: Processing negation\n"; (yyval.expression) = (yyvsp[0].expression); }
-#line 1649 "build/gen/parser.cpp"
+#line 1646 "parser.tab.cxx"
     break;
 
   case 32:
 #line 157 "src/parser.yxx"
                        { std::cerr << "Parser: Processing NON\n"; (yyval.expression) = new UnaryOperation(UnaryOperation::NON, (yyvsp[0].expression)); }
-#line 1655 "build/gen/parser.cpp"
+#line 1652 "parser.tab.cxx"
     break;
 
   case 33:
 #line 158 "src/parser.yxx"
                      { std::cerr << "Parser: Processing comparison\n"; (yyval.expression) = (yyvsp[0].expression); }
-#line 1661 "build/gen/parser.cpp"
+#line 1658 "parser.tab.cxx"
     break;
 
   case 34:
 #line 161 "src/parser.yxx"
                                                                         { (yyval.expression) = new BinaryOperation(BinaryOperation::EGAL, (yyvsp[-2].expression), (yyvsp[0].expression)); }
-#line 1667 "build/gen/parser.cpp"
+#line 1664 "parser.tab.cxx"
     break;
 
   case 35:
 #line 162 "src/parser.yxx"
                                                                         { (yyval.expression) = new BinaryOperation(BinaryOperation::INFERIEUR, (yyvsp[-2].expression), (yyvsp[0].expression)); }
-#line 1673 "build/gen/parser.cpp"
+#line 1670 "parser.tab.cxx"
     break;
 
   case 36:
 #line 163 "src/parser.yxx"
                                                                         { (yyval.expression) = (yyvsp[0].expression); }
-#line 1679 "build/gen/parser.cpp"
+#line 1676 "parser.tab.cxx"
     break;
 
   case 37:
 #line 166 "src/parser.yxx"
                                                                         { (yyval.expression) = new BinaryOperation(BinaryOperation::PLUS, (yyvsp[-2].expression), (yyvsp[0].expression)); }
-#line 1685 "build/gen/parser.cpp"
+#line 1682 "parser.tab.cxx"
     break;
 
   case 38:
 #line 167 "src/parser.yxx"
                                                                         { (yyval.expression) = new BinaryOperation(BinaryOperation::MOINS, (yyvsp[-2].expression), (yyvsp[0].expression)); }
-#line 1691 "build/gen/parser.cpp"
+#line 1688 "parser.tab.cxx"
     break;
 
   case 39:
 #line 168 "src/parser.yxx"
                                                                         { (yyval.expression) = (yyvsp[0].expression); }
-#line 1697 "build/gen/parser.cpp"
+#line 1694 "parser.tab.cxx"
     break;
 
   case 40:
 #line 171 "src/parser.yxx"
                                                                         { (yyval.expression) = new BinaryOperation(BinaryOperation::FOIS, (yyvsp[-2].expression), (yyvsp[0].expression)); }
-#line 1703 "build/gen/parser.cpp"
+#line 1700 "parser.tab.cxx"
     break;
 
   case 41:
 #line 172 "src/parser.yxx"
                                                                         { (yyval.expression) = (yyvsp[0].expression); }
-#line 1709 "build/gen/parser.cpp"
+#line 1706 "parser.tab.cxx"
     break;
 
   case 42:
 #line 175 "src/parser.yxx"
                                                                         { (yyval.expression) = new UnaryOperation(UnaryOperation::MOINS, (yyvsp[0].expression)); }
-#line 1715 "build/gen/parser.cpp"
+#line 1712 "parser.tab.cxx"
     break;
 
   case 43:
 #line 176 "src/parser.yxx"
                                                                         { (yyval.expression) = (yyvsp[0].expression); }
-#line 1721 "build/gen/parser.cpp"
+#line 1718 "parser.tab.cxx"
     break;
 
   case 44:
 #line 179 "src/parser.yxx"
                                                                         { (yyval.expression) = new BinaryOperation(BinaryOperation::INDICE, (yyvsp[-3].expression), (yyvsp[-1].expression)); }
-#line 1727 "build/gen/parser.cpp"
+#line 1724 "parser.tab.cxx"
     break;
 
   case 45:
 #line 180 "src/parser.yxx"
                                                                         { (yyval.expression) = (yyvsp[0].expression); }
-#line 1733 "build/gen/parser.cpp"
+#line 1730 "parser.tab.cxx"
     break;
 
   case 46:
 #line 184 "src/parser.yxx"
                                                                         { (yyval.expression) = (yyvsp[0].expression); }
-#line 1739 "build/gen/parser.cpp"
+#line 1736 "parser.tab.cxx"
     break;
 
   case 47:
 #line 185 "src/parser.yxx"
                                                                         { (yyval.expression) = new Identifier(*(yyvsp[0].identifier)); delete (yyvsp[0].identifier);}
-#line 1745 "build/gen/parser.cpp"
+#line 1742 "parser.tab.cxx"
     break;
 
   case 48:
 #line 186 "src/parser.yxx"
                                                                         { (yyval.expression) = new UnaryOperation(UnaryOperation::LONGUEUR, (yyvsp[-1].expression)); }
-#line 1751 "build/gen/parser.cpp"
+#line 1748 "parser.tab.cxx"
     break;
 
   case 49:
 #line 187 "src/parser.yxx"
                                                                         { (yyval.expression) = (yyvsp[-1].expression); }
-#line 1757 "build/gen/parser.cpp"
+#line 1754 "parser.tab.cxx"
     break;
 
 
-#line 1761 "build/gen/parser.cpp"
+#line 1758 "parser.tab.cxx"
 
       default: break;
     }

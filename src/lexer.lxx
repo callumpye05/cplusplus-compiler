@@ -60,14 +60,14 @@
 "un"     { std::cerr << "lexer: Found 'un' (UN)\n"; return UN; } 
 "pas"    { std::cerr << "lexer: Found 'pas' (PAS)\n"; return PAS; } 
 "tableau" { std::cerr << "lexer: Found 'tableau' (TABLEAU_TYPE)\n"; return TABLEAU_TYPE; }
-"tab" 	 { std::cerr << "lexer: Found 'tab' (TAB)\n"; return TAB; }
-"Tableau" { std::cerr << "lexer: Found 'Tableau' (TABLEAU_CONSTRUCTEUR)\n"; return TABLEAU_CONSTRUCTEUR; }
+
 
  /* Type names */
-"booléen"                { yylval.type=algo_types::BOOLEAN;                               return TYPE; }
-"entier"                 { yylval.type=algo_types::INTEGER;                               return TYPE; }
-"caractère"              { yylval.type=algo_types::CHARACTER;                             return TYPE; }
-"chaîne"                 { yylval.type=algo_types::STRING;                                return TYPE; }
+
+"booléen" { yylval.type=new algo_types(algo_types::BOOLEAN); return TYPE; }
+"entier" { yylval.type=new algo_types(algo_types::INTEGER); return TYPE; }
+"caractère" { yylval.type=new algo_types(algo_types::CHARACTER); return TYPE; }
+"chaîne" { yylval.type=new algo_types(algo_types::STRING); return TYPE; }
 
  /* Booleans */
 "vrai"	                 { yylval.expression=new Literal(algo_types::BOOLEAN, "true");    return LITTERAL; }
@@ -84,4 +84,5 @@
 
  /* Identifiers (used as language names) */
 [A-Za-z][A-Za-z_0-9]*	 { yylval.identifier=new std::string(yytext);			  return ID; }
+
 

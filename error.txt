@@ -1,0 +1,2 @@
+g++ -W -Wall -Wextra -g -Isrc -MMD -MP -Wno-free-nonheap-object -c build/gen/parser.cpp -o build/obj/parser.o
+g++ -W -Wall -Wextra -g -Isrc -MMD -MP -Wno-free-nonheap-object -c build/gen/parser.cpp -o build/obj/parser.o

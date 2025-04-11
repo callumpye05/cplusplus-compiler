@@ -21,62 +21,16 @@ std::string Literal::cpp_code() const {
 std::string Identifier::cpp_code() const {
   return name;
 }
-// In ArrayType implementation
-std::string ArrayType::cpp_code() const {
-    std::string type_str;
-    if (std::holds_alternative<base_types>(element_type)) {
-        switch (std::get<base_types>(element_type)) {
-            case base_types::BOOLEAN:   type_str = "bool"; break;
-            case base_types::INTEGER:   type_str = "int"; break;
-            case base_types::CHARACTER: type_str = "char"; break;
-            case base_types::STRING:    type_str = "std::string"; break;
-            default:                    type_str = "ERROR"; break;
-        }
-    } else {
-        type_str = std::get<ArrayType>(element_type).cpp_code();
-    }
-    return type_str + "[" + std::to_string(size) + "]";
-}
 
-// In ArrayCreation implementation
-std::string ArrayCreation::cpp_code() const {
-    return type.cpp_code() + "{}"; // Type[size]{}
-}
-
-// In ArrayAccess implementation
-std::string ArrayAccess::cpp_code() const {
-    return tableau->cpp_code() + "[__check_index(" + 
-           indice->cpp_code() + ", " + 
-           std::to_string(std::get<ArrayType>(tableau->infer_type()).size) + ")]";
-}
 
 std::string Declaration::cpp_code(const std::string& indent) const {
-    if (std::holds_alternative<ArrayType>(type)) {
-        const ArrayType& array_type = std::get<ArrayType>(type);
-        return indent + array_type.cpp_code() + " " + variable_name;
-    } else {
-        switch (std::get<base_types>(type)) {
-            case base_types::BOOLEAN:   return indent + "bool " + variable_name;
-            case base_types::INTEGER:   return indent + "int " + variable_name;
-            case base_types::CHARACTER: return indent + "char " + variable_name;
-            case base_types::STRING:    return indent + "std::string " + variable_name;
-            default:                    return indent + "/* ERROR */";
-        }
-    }
-}
-
-std::string ArrayCreation::cpp_code() const {
-    // For static arrays, creation is just declaration with size
-    return "{}"; // Zero-initialized
-}
-std::string ArrayAccess::cpp_code() const {
-    // Add bounds checking as required by 2e
-    return tableau->cpp_code() + "[__check_index(" + 
-           indice->cpp_code() + ", " + 
-           std::to_string(array_size) + ")]";
-}
-std::string ArrayLength::cpp_code() const {
-    return std::to_string(array_size); // Static arrays know their size
+  switch(type.kind) {
+  case algo_types::BOOLEAN   : return indent + "bool "        + variable_name;
+  case algo_types::INTEGER   : return indent + "int "         + variable_name;
+  case algo_types::CHARACTER : return indent + "char "        + variable_name;
+  case algo_types::STRING    : return indent + "std::string " + variable_name;
+  default                    : return indent + "";
+  }
 }
 
 
@@ -188,33 +142,67 @@ std::string For::cpp_code(const std::string& indent) const {
  * Il faut representer le tableau dans un cas appart afin de representer le type de ces elements 
  * Donc il faut deux cas distincts , soit nous avons un tableau , soit un type du style, ENTIER, BOOL , etc 
  * */
-std::string Declaration::cpp_code(const std::string& indent) const {
-  if ( type == algo_types::ARRAY) {
-		
-		ArrayType* type_tableau = dynamic_cast<const ArrayType*>(this);
-		
-		if(type_tableau) {
-			std::string type_element;
-			
-			switch(array_type->type_element) {
-				case algo_types::BOOLEAN   : element_type = "bool"; break;
-				case algo_types::INTEGER   : element_type = "int"; break;
-				case algo_types::CHARACTER : element_type = "char "; break;
-				case algo_types::STRING    : element_type = "string"; break;
-				default					   : element_type ="ERREUR" ; break;  	
-			}
-			 
-			
-			
-		}
-		
-  switch(type) {
-  case algo_types::BOOLEAN   : return indent + "bool "        + variable_name;
-  case algo_types::INTEGER   : return indent + "int "         + variable_name;
-  case algo_types::CHARACTER : return indent + "char "        + variable_name;
-  case algo_types::STRING    : return indent + "std::string " + variable_name;
-  default                    : return indent + "";
-  }
+
+
+
+
+std::string ArrayCreation::cpp_code() const {
+    algo_types element_type = infer_type(Program({}, nullptr)); // Context fictif
+    
+    if (element_type.kind == algo_types::ARRAY && !element_type.parameters.empty()) {
+        element_type = element_type.parameters[0];
+    }
+    
+    std::string type_name;
+    switch(element_type.kind) {
+        case algo_types::INTEGER: type_name = "int"; break;
+        case algo_types::BOOLEAN: type_name = "bool"; break;
+        case algo_types::CHARACTER: type_name = "char"; break;
+        case algo_types::STRING: type_name = "std::string"; break;
+        default: type_name = "int"; 
+    }
+    
+    return "std::vector<" + type_name + ">(" + taille->cpp_code() + ")";
+}
+
+algo_types ArrayCreation::infer_type(const Program& context) const {
+    algo_types size_type = taille->infer_type(context);
+    if (size_type != algo_types::INTEGER) {
+        std::cerr << "Erreur : la taille du tableau doit être un entier" << std::endl;
+        return algo_types::ERROR;
+    }
+    return algo_types(algo_types::ARRAY, {algo_types::INTEGER}); // Exemple pour un tableau d'entiers
+}
+
+std::string ArrayAccess::cpp_code() const {
+    return tableau->cpp_code() + "[" + indice->cpp_code() + "]";
+}
+
+algo_types ArrayAccess::infer_type(const Program& context) const {
+    algo_types array_type = tableau->infer_type(context);
+    algo_types index_type = indice->infer_type(context);
+    
+    if (array_type.kind != algo_types::ARRAY) {
+        std::cerr << "Erreur : accès à un indice sur un non-tableau" << std::endl;
+        return algo_types::ERROR;
+    }
+    if (index_type != algo_types::INTEGER) {
+        std::cerr << "Erreur : l'indice doit être un entier" << std::endl;
+        return algo_types::ERROR;
+    }
+    if (array_type.parameters.empty()) {
+        return algo_types::ERROR;
+    }
+    return array_type.parameters[0];
+}
+
+algo_types ArrayLength::infer_type(const Program& context) const {
+    algo_types array_type = argument->infer_type(context);
+    if (array_type.kind != algo_types::ARRAY && array_type != algo_types::STRING) {
+        std::cerr << "Erreur : longueur appliquée à un non-tableau" << std::endl;
+        return algo_types::ERROR;
+    }
+    return algo_types::INTEGER;
 }
 
 
