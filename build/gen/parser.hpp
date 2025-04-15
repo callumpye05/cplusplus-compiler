@@ -89,7 +89,9 @@ extern int yydebug;
     LONGUEUR = 295,
     LIRE = 296,
     NON = 297,
-    TABLEAU_TYPE = 298
+    TABLEAU_TYPE = 298,
+    TABLEAU_CTOR = 299,
+    FERMETURE_LONGUEUR = 300
   };
 #endif
 
@@ -97,7 +99,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 43 "src/parser.yxx"
+#line 47 "src/parser.yxx"
 
     Instruction* instruction;
     Expression* expression;
@@ -108,7 +110,7 @@ union YYSTYPE
     std::vector<Expression*>* expression_list;
     std::vector<std::pair<Expression*, Sequence*>>* elseIfList;  
 
-#line 112 "build/gen/parser.hpp"
+#line 114 "build/gen/parser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;

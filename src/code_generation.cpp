@@ -25,11 +25,26 @@ std::string Identifier::cpp_code() const {
 
 std::string Declaration::cpp_code(const std::string& indent) const {
   switch(type.kind) {
-  case algo_types::BOOLEAN   : return indent + "bool "        + variable_name;
-  case algo_types::INTEGER   : return indent + "int "         + variable_name;
-  case algo_types::CHARACTER : return indent + "char "        + variable_name;
-  case algo_types::STRING    : return indent + "std::string " + variable_name;
-  default                    : return indent + "";
+    case algo_types::BOOLEAN   : return indent + "bool "         + variable_name;
+    case algo_types::INTEGER   : return indent + "int "          + variable_name;
+    case algo_types::CHARACTER : return indent + "char "         + variable_name;
+    case algo_types::STRING    : return indent + "std::string "  + variable_name;
+    case algo_types::ARRAY     : {  // Handle arrays (e.g., "tableau de entier")
+      if (type.parameters.empty()) {
+        return indent + "std::vector<int> " + variable_name;  // Default to int if no inner type
+      }
+      // Map inner type to C++ (e.g., "entier" → "int")
+      std::string inner_type;
+      switch(type.parameters[0].kind) {
+        case algo_types::INTEGER   : inner_type = "int";          break;
+        case algo_types::BOOLEAN   : inner_type = "bool";         break;
+        case algo_types::CHARACTER : inner_type = "char";         break;
+        case algo_types::STRING    : inner_type = "std::string";  break;
+        default                    : inner_type = "int";          break;
+      }
+      return indent + "std::vector<" + inner_type + "> " + variable_name;
+    }
+    default: return indent + "/* UNKNOWN TYPE */ " + variable_name;  // Debug fallback
   }
 }
 
@@ -215,10 +230,11 @@ algo_types ArrayLength::infer_type(const Program& context) const {
 std::string Program::cpp_code() const {
   std::string s =
     "#include<iostream>\n"
-    "#include<string>\n\n"
+    "#include<string>\n"
+    "#include<vector>\n\n"  // ← Always added
     "int main() {\n";
        for(const Declaration* declaration : declarations)
-         s+= declaration->cpp_code("  ") + ";\n";
+         s += declaration->cpp_code("  ") + ";\n";
        return s +
        body->cpp_code(std::string("  ")) +
     "  return 0;\n"

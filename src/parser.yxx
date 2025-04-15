@@ -31,12 +31,16 @@ convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
 %token  SI ALORS SINON TANT QUE POUR FAIRE ALLANT DE AVEC UN PAS A SINONSI 
 %token  AFFECTATION PT_VIRGULE DEUX_POINTS PARENTHESE_G PARENTHESE_D CROCHET_G CROCHET_D VIRGULE
 %token  PLUS MOINS MULTIPLIE ET OU EGAL INFERIEUR
-%token  LITTERAL ID ECRIRE LONGUEUR LIRE NON  TABLEAU_TYPE
+%token  LITTERAL ID ECRIRE LONGUEUR LIRE NON  TABLEAU_TYPE TABLEAU_CTOR
 
 
-%right ALORS
+// Ensure SINONSI gets a higher precedence
+%nonassoc CROCHET_G CROCHET_D
 %left SINON 
-%left SINONSI // Ensure SINONSI gets a higher precedence
+%left SINONSI 
+%right ALORS
+%nonassoc LONGUEUR
+%nonassoc FERMETURE_LONGUEUR
 
 			
 // Declaration of the types returned by the actions of the non-terminals
@@ -52,7 +56,7 @@ convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
 }
 
 %type <instruction> commande
-%type <expression> LITTERAL expression disjonction conjonction comparison somme produit oppose indice terme negation
+%type <expression> LITTERAL expression disjonction conjonction comparison somme produit oppose indice terme negation longueur_expr longueur_terme
 %type <sequence> sequence 
 %type <type> type TYPE
 %type <identifier> ID
@@ -69,6 +73,8 @@ convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
 
 %%
 
+
+
 algo:		ALGORITHME VARIABLES var_declaration DEBUT sequence FIN { program = new Program(*$3, $5); delete $3; }
 ;
 
@@ -82,6 +88,7 @@ var_declaration:
     { $$ = new std::vector<Declaration*>(); }
     | var_declaration ID DEUX_POINTS type {
         // $4 is algo_types* (from lexer)
+        std::cerr << "parser: Processed declaration for " << *$2 << "\n";
         $$ = $1;
         $$->push_back(new Declaration(*$2, *$4)); // Dereference the type pointer
         delete $2; // Free the string
@@ -91,7 +98,7 @@ var_declaration:
 
 type:
     TYPE { $$ = $1; }
-    | TABLEAU_TYPE "de" type { $$ = new algo_types(algo_types::ARRAY, {*$3}); delete $3; }
+    | TABLEAU_TYPE type {std::cerr << "parser: Array type\n"; $$ = new algo_types(algo_types::ARRAY, {*$2}); delete $2; }
 ;
 
 sequence:	                                                        { $$ = new Sequence(); }
@@ -140,14 +147,20 @@ commande:
 ;
 
 longueur_expr:
-	LONGUEUR PARENTHESE_G expression PARENTHESE_D { $$ = new UnaryOperation(UnaryOperation::LONGUEUR, $3); }
+    LONGUEUR PARENTHESE_G expression PARENTHESE_D
+        { $$ = new UnaryOperation(UnaryOperation::LONGUEUR, $3); }
 ;
 
-expression: disjonction { std::cerr << "Parser: Processing expression\n"; $$ = $1; }
-	    |"Tableau" PARENTHESE_G expression PARENTHESE_D { $$ = new ArrayCreation($3); }
-    	    |LONGUEUR PARENTHESE_G expression PARENTHESE_D { $$ = new UnaryOperation(UnaryOperation::LONGUEUR, $3); }
-	    |expression CROCHET_G expression CROCHET_D { $$ = new ArrayAccess($1, $3); }
+longueur_terme:
+	LONGUEUR PARENTHESE_G terme PARENTHESE_D %prec FERMETURE_LONGUEUR	{ $$ = new UnaryOperation(UnaryOperation::LONGUEUR, $3); }
 ;
+
+
+
+expression: disjonction { std::cerr << "Parser: Processing expression\n"; $$ = $1; }
+	    |TABLEAU_CTOR PARENTHESE_G expression PARENTHESE_D { std::cerr << "Parser: Processing array creation\n"; $$ = new ArrayCreation($3); }
+    	    |longueur_expr
+	    |expression CROCHET_G expression CROCHET_D { $$ = new ArrayAccess($1, $3); }
 ;
 
 disjonction: disjonction OU conjonction { std::cerr << "Parser: Processing OU\n"; $$ = new BinaryOperation(BinaryOperation::OU, $1, $3); }
@@ -187,7 +200,7 @@ indice:		terme CROCHET_G expression CROCHET_D                    { $$ = new Bina
 
 terme:		LITTERAL				                { $$ = $1; }
 	|	ID				                        { $$ = new Identifier(*$1); delete $1;}
-	|	LONGUEUR PARENTHESE_G expression PARENTHESE_D           { $$ = new UnaryOperation(UnaryOperation::LONGUEUR, $3); }
+	|	longueur_terme
 	|	PARENTHESE_G expression PARENTHESE_D                    { $$ = $2; }
 ;
 
