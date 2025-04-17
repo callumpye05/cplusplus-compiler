@@ -8,6 +8,8 @@
  */
 
 #include "ast.hpp"
+#include "type_fonction.hpp"
+
 
 /***********************************************************
  *                                                         *
@@ -29,9 +31,12 @@ algo_types UnaryOperation::infer_type(const Program& context) const {
   
   switch(oper) {
   case LONGUEUR:
-    if(argument_type == algo_types::STRING) return algo_types::INTEGER;
-    std::cerr << "Erreur : la fonction longueur doit être utilisée avec une chaîne de caractères" << std::endl;
-    break;
+  if(argument_type.kind == algo_types::STRING || argument_type.kind == algo_types::ARRAY)
+    return algo_types(algo_types::INTEGER);
+
+  std::cerr << "Erreur : la fonction longueur doit être utilisée avec une chaîne de caractères ou un tableau" << std::endl;
+  return algo_types(algo_types::ERROR);
+
 
   case MOINS:
     if(argument_type == algo_types::INTEGER) return algo_types::INTEGER;
@@ -45,6 +50,105 @@ algo_types UnaryOperation::infer_type(const Program& context) const {
   }
   return algo_types::ERROR;
 }
+
+
+algo_types ArrayCreation::infer_type(const Program& program) const {
+    // 1) Must have at least one dimension
+    if (dimensions.empty()) {
+        std::cerr << "Erreur : aucune dimension spécifiée pour le Tableau\n";
+        return algo_types(algo_types::ERROR);
+    }
+
+    // 2) Every dimension expression must be an integer
+    for (size_t i = 0; i < dimensions.size(); ++i) {
+        algo_types dim_t = dimensions[i]->infer_type(program);
+        if (dim_t.kind != algo_types::INTEGER) {
+            std::cerr << "Erreur : la dimension #" << (i+1)
+                      << " doit être un entier\n";
+            return algo_types(algo_types::ERROR);
+        }
+    }
+
+    // 3) Return the stored array_type (set earlier by the parser or assignment)
+    return array_type;
+}
+
+algo_types ArrayAccess::infer_type(const Program& ctx) const {
+  // 1) what am I indexing?
+  algo_types base = array->infer_type(ctx);
+  // 2) every index must be integer
+  for (auto* idx : indices) {
+    if (idx->infer_type(ctx) != algo_types::INTEGER) {
+      std::cerr << "Erreur : l'indice d'un tableau/doit être un entier\n";
+      return algo_types::ERROR;
+    }
+  }
+
+  // 3a) if it was a string, exactly one index → char
+  if (base.kind == algo_types::STRING) {
+    if (indices.size() != 1) {
+      std::cerr << "Erreur : trop d'indices pour une chaîne\n";
+      return algo_types::ERROR;
+    }
+    return algo_types(algo_types::CHARACTER);
+  }
+
+  // 3b) if it was an array, peel off one layer per index
+  if (base.kind == algo_types::ARRAY) {
+    algo_types element = base;
+    for (size_t i = 0; i < indices.size(); ++i) {
+      if (element.parameters.empty()) {
+        std::cerr << "Erreur : trop d'indices pour accéder à un élément du tableau\n";
+        return algo_types::ERROR;
+      }
+      element = element.parameters[0];
+    }
+    return element;
+  }
+
+  std::cerr << "Erreur : accès par [] sur un type non‑tableau/non‑chaîne\n";
+  return algo_types::ERROR;
+}
+
+bool ArrayAssignment::validate(const Program& program) const {
+    // 1) Infer the type of the array being accessed
+    algo_types array_t = array->infer_type(program);
+    if (array_t.kind != algo_types::ARRAY) {
+        std::cerr << "Erreur : l'affectation doit se faire sur un tableau." << std::endl;
+        return false;
+    }
+
+    // 2) Peel off one layer per index to get the element type
+    algo_types elem_t = array_t;
+    for (auto* idx_expr : indices) {
+        // a) check index is integer
+        algo_types idx_t = idx_expr->infer_type(program);
+        if (idx_t.kind != algo_types::INTEGER) {
+            std::cerr << "Erreur : l'indice du tableau doit être un entier." << std::endl;
+            return false;
+        }
+        // b) peel
+        if (elem_t.parameters.empty()) {
+            std::cerr << "Erreur : trop d'indices pour accéder à un élément du tableau." << std::endl;
+            return false;
+        }
+        elem_t = elem_t.parameters[0];
+    }
+    return true;
+}
+
+algo_types ArrayLength::infer_type(const Program& context) const {
+    algo_types array_type = argument->infer_type(context);
+    if (array_type.kind != algo_types::ARRAY && array_type != algo_types::STRING) {
+        std::cerr << "Erreur : longueur appliquée à un non-tableau" << std::endl;
+        return algo_types::ERROR;
+    }
+    return algo_types::INTEGER;
+}
+
+
+
+
 /*
  *algo_types ArrayType::infer_type(const Program& program) const {
   return algo_types::ARRAY;
@@ -195,12 +299,23 @@ bool Assignment::validate(const Program& context) const {
 }
 */
 bool Assignment::validate(const Program& context) const {
+    // 1) What type did we declare on the LHS?
     algo_types variable_type = context.infer_type(variable);
+
+    // 2) If the RHS is an ArrayCreation, give it the LHS’s declared type
+    if (auto* ac_const = dynamic_cast<const ArrayCreation*>(value)) {
+        // now drop the const so we can assign to its array_type
+        auto* ac = const_cast<ArrayCreation*>(ac_const);
+        ac->array_type = variable_type;
+    }
+
+    // 3) Now infer the RHS’s type correctly
     algo_types expression_type = value->infer_type(context);
-    
-    if (variable_type !=  expression_type) {
+
+    // 4) Compare
+    if (variable_type != expression_type) {
         std::cerr << "Erreur : l'affectation de " << variable 
-                  << " n'est pas du bon type."<<std::endl;
+                  << " n'est pas du bon type." << std::endl;
         return false;
     }
     return true;

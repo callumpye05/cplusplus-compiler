@@ -34,11 +34,11 @@
 /* Undocumented macros, especially those whose name start with YY_,
    are private implementation details.  Do not rely on them.  */
 
-#ifndef YY_YY_BUILD_GEN_PARSER_HPP_INCLUDED
-# define YY_YY_BUILD_GEN_PARSER_HPP_INCLUDED
+#ifndef YY_YY_PARSER_TAB_HXX_INCLUDED
+# define YY_YY_PARSER_TAB_HXX_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 1
+# define YYDEBUG 0
 #endif
 #if YYDEBUG
 extern int yydebug;
@@ -99,7 +99,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 51 "src/parser.yxx"
+#line 47 "parser.yxx"
 
     Instruction* instruction;
     Expression* expression;
@@ -110,7 +110,7 @@ union YYSTYPE
     std::vector<Expression*>* expression_list;
     std::vector<std::pair<Expression*, Sequence*>>* elseIfList;  
 
-#line 114 "build/gen/parser.hpp"
+#line 114 "parser.tab.hxx"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -123,4 +123,4 @@ extern YYSTYPE yylval;
 
 int yyparse (void);
 
-#endif /* !YY_YY_BUILD_GEN_PARSER_HPP_INCLUDED  */
+#endif /* !YY_YY_PARSER_TAB_HXX_INCLUDED  */

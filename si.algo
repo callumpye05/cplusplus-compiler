@@ -1,14 +1,14 @@
 
 algorithme //array
 variables
-	T : tableau de tableaux d’entiers
+	T : tableau de tableaux de entiers
 	i : entier
 	j : entier
 début
 	T <- Tableau(10);
-	pour i allant de 1 `a Longueur(T) faire
+	pour i allant de 1 à longueur(T) faire
 		T[i] <- Tableau(10);
-		pour j allant de 1 `a Longueur(T[i]) faire
+		pour j allant de 1 à longueur(T[i]) faire
 			T[i][j] <- i+j;
 		fin pour
 	fin pour

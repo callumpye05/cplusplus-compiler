@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <map>
 
 struct Program;
 
@@ -46,7 +47,49 @@ struct algo_types {
   bool operator!=(const algo_types& other) const {
     return !(*this == other);
   }
+  
+  std::string to_string() const {
+        switch(kind) {
+            case BOOLEAN:   return "booléen";
+            case INTEGER:   return "entier";
+            case CHARACTER: return "caractère";
+            case STRING:    return "chaîne";
+            case ARRAY:
+                if (parameters.empty()) return "tableau de ?";
+                return "tableau de " + parameters[0].to_string();
+            case ERROR:     return "erreur";
+            default:        return "inconnu";
+        }
+    }
 
+	
+
+    // Add this method to get the base type (for nested arrays)
+    algo_types get_base_type() const {
+        if (kind != ARRAY || parameters.empty()) 
+            return *this;
+        return parameters[0].get_base_type();
+    }
+
+    // Add this method to get array dimensions
+    size_t get_array_depth() const {
+        if (kind != ARRAY) return 0;
+        if (parameters.empty()) return 1;
+        return 1 + parameters[0].get_array_depth();
+    }
+    
+    std::string to_cpp_type() const {
+  switch(kind) {
+    case BOOLEAN:   return "bool";
+    case INTEGER:   return "int";
+    case CHARACTER: return "char";
+    case STRING:    return "std::string";
+    case ARRAY:
+      if (parameters.empty()) return "std::vector<int>"; // default fallback
+      return "std::vector<" + parameters[0].to_cpp_type() + ">";
+    default: return "/*unknown*/";
+  }
+}
 };
 
 
@@ -402,25 +445,57 @@ struct For: public Instruction {
 };
 
 struct ArrayCreation : public Expression {
-    Expression* taille;
-    ArrayCreation(Expression* taille) : taille(taille) {}
-    ~ArrayCreation() override { if(taille) delete taille; }
+    algo_types array_type;
+    std::vector<Expression*> dimensions;  
+    
+    
+    
+   ArrayCreation(const algo_types& arr_type, std::vector<Expression*> dims)
+        : array_type(arr_type), dimensions(dims) {}
+    
+    ~ArrayCreation() override {
+        for (auto dim : dimensions) delete dim;
+    }
+    
     std::string cpp_code() const override;
     algo_types infer_type(const Program&) const override;
 };
 
 // Pour l'accès aux tableaux
 struct ArrayAccess : public Expression {
-    Expression* tableau;
-    Expression* indice;
-    ArrayAccess(Expression* tableau, Expression* indice) : tableau(tableau), indice(indice) {}
-    ~ArrayAccess() override { 
-        if(tableau) delete tableau; 
-        if(indice) delete indice;
+    Expression* array;
+    std::vector<Expression*> indices;  // Multiple indices for nested arrays
+    
+    ArrayAccess(Expression* arr, std::vector<Expression*> idx)
+        : array(arr), indices(idx) {}
+    
+    ~ArrayAccess() override {
+        delete array;
+        for (auto idx : indices) delete idx;
     }
+    
     std::string cpp_code() const override;
     algo_types infer_type(const Program&) const override;
 };
+
+struct ArrayAssignment : public Instruction {
+    Expression* array;
+    std::vector<Expression*> indices;
+    Expression* value;
+    
+    ArrayAssignment(Expression* arr, std::vector<Expression*> idx, Expression* val)
+        : array(arr), indices(idx), value(val) {}
+    
+    ~ArrayAssignment() override {
+        delete array;
+        for (auto idx : indices) delete idx;
+        delete value;
+    }
+    
+    std::string cpp_code(const std::string& indent) const override;
+	bool validate(const Program&) const override;
+};
+
 
 // Pour la longueur des tableaux
 struct ArrayLength : public UnaryOperation {
@@ -435,24 +510,55 @@ struct ArrayLength : public UnaryOperation {
  *                                *
  **********************************/
 
+#include <map>
+#include <string>
+#include <vector>
+#include "ast.hpp"  // for Declaration, Instruction, algo_types
+
 struct Program {
-
+  // your existing fields
   const std::vector<Declaration*> declarations;
-  const Instruction* body;
+  const Instruction*      body;
 
-  Program(const std::vector<Declaration*> &declarations, Instruction* body) : declarations(declarations), body(body) {}
+  // new symbol‑table mapping var names → their declared types
+  std::map<std::string,algo_types> symtab;
 
-  ~Program() {
-    for(Declaration* declaration : declarations)
-      delete declaration;
-    if(body) delete body;
+  // ctor: build symtab
+  Program(const std::vector<Declaration*>& decls,
+          Instruction* b)
+    : declarations(decls), body(b)
+  {
+    for (auto* d : declarations) {
+  symtab.emplace(d->variable_name, d->type);
+	}
   }
-  
+
+  // dtor stays the same
+  ~Program() {
+    for (auto* d : declarations) delete d;
+    if (body) delete body;
+  }
+
+  // your existing methods
   std::string cpp_code() const;
-  algo_types infer_type(const std::string&) const;
   bool validate() const;
 
+  // helper: given a variable name, return its declared algo_type
+  // you can call this from your parser or from Assignment/ArrayCreation
+  algo_types lookup_type(const std::string& var) const {
+    auto it = symtab.find(var);
+    if (it == symtab.end()) {
+      std::cerr << "Erreur interne : variable non déclarée « " << var << " »\n";
+      return algo_types(algo_types::ERROR);
+    }
+    return it->second;
+  }
+
+  // (optionally) repurpose infer_type(string) to be identical:
+  algo_types infer_type(const std::string& variable) const;
 };
+
+
 
 
 #endif // AST_HPP_DEFINED
