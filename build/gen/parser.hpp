@@ -38,7 +38,7 @@
 # define YY_YY_BUILD_GEN_PARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 1
+# define YYDEBUG 0
 #endif
 #if YYDEBUG
 extern int yydebug;
@@ -68,30 +68,35 @@ extern int yydebug;
     PAS = 274,
     A = 275,
     SINONSI = 276,
-    AFFECTATION = 277,
-    PT_VIRGULE = 278,
-    DEUX_POINTS = 279,
-    PARENTHESE_G = 280,
-    PARENTHESE_D = 281,
-    CROCHET_G = 282,
-    CROCHET_D = 283,
-    VIRGULE = 284,
-    PLUS = 285,
-    MOINS = 286,
-    MULTIPLIE = 287,
-    ET = 288,
-    OU = 289,
-    EGAL = 290,
-    INFERIEUR = 291,
-    LITTERAL = 292,
-    ID = 293,
-    ECRIRE = 294,
-    LONGUEUR = 295,
-    LIRE = 296,
-    NON = 297,
-    TABLEAU_TYPE = 298,
-    TABLEAU_CTOR = 299,
-    FERMETURE_LONGUEUR = 300
+    TOUT = 277,
+    DANS = 278,
+    AFFECTATION = 279,
+    PT_VIRGULE = 280,
+    DEUX_POINTS = 281,
+    PARENTHESE_G = 282,
+    PARENTHESE_D = 283,
+    CROCHET_G = 284,
+    CROCHET_D = 285,
+    VIRGULE = 286,
+    PLUS = 287,
+    MOINS = 288,
+    MULTIPLIE = 289,
+    ET = 290,
+    OU = 291,
+    EGAL = 292,
+    INFERIEUR = 293,
+    LITTERAL = 294,
+    ID = 295,
+    ECRIRE = 296,
+    LONGUEUR = 297,
+    LIRE = 298,
+    NON = 299,
+    TABLEAU_TYPE = 300,
+    TABLEAU_CTOR = 301,
+    FONCTION = 302,
+    PROCEDURE = 303,
+    RETOURNER = 304,
+    FERMETURE_LONGUEUR = 305
   };
 #endif
 
@@ -99,7 +104,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 51 "src/parser.yxx"
+#line 53 "src/parser.yxx"
 
     Instruction* instruction;
     Expression* expression;
@@ -109,8 +114,9 @@ union YYSTYPE
     std::vector<Declaration*>* declaration;
     std::vector<Expression*>* expression_list;
     std::vector<std::pair<Expression*, Sequence*>>* elseIfList;  
+    std::vector<Parameter>* param_list;
 
-#line 114 "build/gen/parser.hpp"
+#line 120 "build/gen/parser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;

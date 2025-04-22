@@ -503,6 +503,65 @@ struct ArrayLength : public UnaryOperation {
     algo_types infer_type(const Program&) const override;
 };
 
+struct ForEach : public Instruction {
+    std::string loop_var;
+    std::string array_name;
+    const Instruction* body;
+
+    ForEach(const std::string& loop_var, const std::string& array_name, const Instruction* body)
+        : loop_var(loop_var), array_name(array_name), body(body) {}
+
+    ~ForEach() override {
+        if (body) delete body;
+    }
+	
+	std::string cpp_code(const std::string&) const override;
+	bool validate(const Program&) const override;
+};
+
+struct Parameter {
+    std::string name;
+    algo_types type;
+    Parameter(const std::string& n, const algo_types& t) : name(n), type(t) {}
+};
+
+struct FunctionDefinition : public Instruction {
+    std::string name;
+    std::vector<Parameter> params;
+    algo_types return_type;
+    Sequence* body;
+
+    FunctionDefinition(const std::string& n, const std::vector<Parameter>& p, const algo_types& r, Sequence* b)
+        : name(n), params(p), return_type(r), body(b) {}
+
+    ~FunctionDefinition() override { delete body; }
+    std::string cpp_code(const std::string&) const override;
+	bool validate(const Program&) const override;
+};
+
+struct ProcedureDefinition : public Instruction {
+    std::string name;
+    std::vector<Parameter> params;
+    Sequence* body;
+
+    ProcedureDefinition(const std::string& n, const std::vector<Parameter>& p, Sequence* b)
+        : name(n), params(p), body(b) {}
+
+    ~ProcedureDefinition() override { delete body; }
+    std::string cpp_code(const std::string&) const override;
+	bool validate(const Program&) const override;
+};
+
+struct Return : public Instruction {
+    Expression* value;
+    Return(Expression* v) : value(v) {}
+    ~Return() override { delete value; }
+    std::string cpp_code(const std::string&) const override;
+	bool validate(const Program&) const override;
+};
+
+
+
 
 /**********************************
  *                                *

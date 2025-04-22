@@ -5,7 +5,7 @@
  * \version 1
  * \date 17-02-2025
  */
-%debug
+
 
 
 %{
@@ -30,10 +30,12 @@ convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
 // Tokens used to communicate between the lexer and the parser
 // Returned by the lexer, and used as terminal symbols by the parser
 %token  ALGORITHME VARIABLES TYPE DEBUT FIN
-%token  SI ALORS SINON TANT QUE POUR FAIRE ALLANT DE AVEC UN PAS A SINONSI 
+%token  SI ALORS SINON TANT QUE POUR FAIRE ALLANT DE AVEC UN PAS A SINONSI TOUT DANS
 %token  AFFECTATION PT_VIRGULE DEUX_POINTS PARENTHESE_G PARENTHESE_D CROCHET_G CROCHET_D VIRGULE
 %token  PLUS MOINS MULTIPLIE ET OU EGAL INFERIEUR
 %token  LITTERAL ID ECRIRE LONGUEUR LIRE NON  TABLEAU_TYPE TABLEAU_CTOR
+%token FONCTION PROCEDURE RETOURNER
+
 
 
 // Ensure SINONSI gets a higher precedence
@@ -57,8 +59,10 @@ convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
     std::vector<Declaration*>* declaration;
     std::vector<Expression*>* expression_list;
     std::vector<std::pair<Expression*, Sequence*>>* elseIfList;  
+    std::vector<Parameter>* param_list;
 }
 
+%type <instruction> fonction_definition procedure_definition retour
 %type <instruction> commande 
 %type <expression> LITTERAL expression disjonction conjonction comparison somme produit oppose terme negation longueur_expr longueur_terme array_creation array_access 
 %type <sequence> sequence 
@@ -69,6 +73,8 @@ convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
 %type <sequence> opt_sinon
 %type <elseIfList> autres_conditions
 %type <elseIfList> opt_autres_conditions
+%type <param_list> param_list param_list_nonvide
+
 
 
 
@@ -159,6 +165,44 @@ opt_sinon:
     | /* vide */   { $$ = nullptr; }  // Pas de SINON
 ;
 
+fonction_definition:
+    FONCTION ID PARENTHESE_G param_list PARENTHESE_D DEUX_POINTS type DEBUT sequence FIN FONCTION {
+        $$ = new FunctionDefinition(*$2, *$4, *$7, $9);
+        delete $2; delete $4; delete $7;
+    }
+;
+
+procedure_definition:
+    PROCEDURE ID PARENTHESE_G param_list PARENTHESE_D DEBUT sequence FIN PROCEDURE {
+        $$ = new ProcedureDefinition(*$2, *$4, $7);
+        delete $2; delete $4;
+    }
+;
+
+param_list:
+    /* vide */ { $$ = new std::vector<Parameter>(); }
+    | param_list_nonvide { $$ = $1; }
+;
+
+param_list_nonvide:
+    ID DEUX_POINTS type {
+        $$ = new std::vector<Parameter>();
+        $$->push_back(Parameter(*$1, *$3));
+        delete $1; delete $3;
+    }
+    | param_list_nonvide VIRGULE ID DEUX_POINTS type {
+        $$ = $1;
+        $$->push_back(Parameter(*$3, *$5));
+        delete $3; delete $5;
+    }
+;
+
+retour:
+    RETOURNER expression PT_VIRGULE {
+        $$ = new Return($2);
+    }
+;
+
 commande:
     
     
@@ -181,13 +225,16 @@ commande:
     	aa->indices.clear();
     	delete aa;
 }
-    
+    | fonction_definition
+    | procedure_definition
+    | retour
     | ID AFFECTATION expression PT_VIRGULE                { $$ = new Assignment(*$1, $3); delete $1; }
     | ECRIRE PARENTHESE_G expression_list PARENTHESE_D PT_VIRGULE  { $$ = new Write(*$3); }
     | LIRE ID PT_VIRGULE                               { $$ = new Read(*$2); delete $2; }
     | SI expression ALORS sequence opt_autres_conditions opt_sinon FIN SI { $$ = new If($2, $4, convertElseIf(*$5), $6); }
     | TANT QUE expression FAIRE sequence FIN TANT QUE   { $$ = new While($3, $5); }
     | POUR ID ALLANT DE expression A expression AVEC UN PAS DE expression FAIRE sequence FIN POUR { $$ = new For(*$2, $5, $7, $12, $14); } //ceci concerne indice choisit par utilisateur
+    | POUR TOUT ID DANS ID FAIRE sequence FIN POUR { $$ = new ForEach(*$3, *$5, $7); delete $3; delete $5; }
     | POUR ID ALLANT DE expression A expression FAIRE sequence FIN POUR { $$ = new For(*$2, $5, $7, new Literal(algo_types::INTEGER, "1") , $9); } 
     | ID AFFECTATION array_creation PT_VIRGULE {
       	// look up T’s declared type in your var_declaration list:
@@ -290,8 +337,8 @@ void yyerror(const char *s) {
 }
 
 int main(int, char *argv[]) {
-  extern int yydebug;
-  yydebug = 1;
+  //extern int yydebug;
+  //yydebug = 1;
   yyin=fopen(argv[1],"r");
   yyparse();
 

@@ -400,6 +400,30 @@ bool For::validate(const Program& context) const {
     return body->validate(context);
 }
 
+bool ForEach::validate(const Program& p) const  {
+        auto t = p.lookup_type(array_name);
+        if (t.kind != algo_types::ARRAY) {
+            std::cerr << "Erreur : « " << array_name << " » n’est pas un tableau.\n";
+            return false;
+        }
+        return body->validate(p);
+    }
+    
+bool FunctionDefinition::validate(const Program& context) const {
+    return body->validate(context);
+}
+
+bool ProcedureDefinition::validate(const Program& context) const {
+    return body->validate(context);
+}
+
+bool Return::validate(const Program& context) const {
+    // Minimal check: we return something valid (no ERROR type)
+    return value->infer_type(context) != algo_types::ERROR;
+}
+
+
+
 /********************************************************************
  *                                                                  *
  * Definition of the type and validate methods for the Program type *

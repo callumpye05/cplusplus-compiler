@@ -7,6 +7,8 @@
  */
 
 #include "ast.hpp"
+#include <sstream>
+
 
 /**************************************************
  *                                                *
@@ -221,7 +223,18 @@ std::string ArrayAssignment::cpp_code(const std::string& indent) const {
 }
 
 
+std::string ForEach::cpp_code(const std::string& indent) const  {
+        std::ostringstream oss;
+        oss << indent << "for (auto " << loop_var << " : " << array_name << ") {\n";
+        oss << body->cpp_code(indent + "  ");
+        oss << indent << "}\n";
+        return oss.str();
+    }
+    
 
+std::string Return::cpp_code() const {
+    return "return " + value->cpp_code() + ";\n";
+}
 
 
 

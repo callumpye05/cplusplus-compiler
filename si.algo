@@ -1,15 +1,16 @@
 
 algorithme //array
 variables
-	T : tableau de tableaux de entiers
+	T : tableau de entier
 	i : entier
-	j : entier
+	x : entier
 début
 	T <- Tableau(10);
 	pour i allant de 1 à longueur(T) faire
-		T[i] <- Tableau(10);
-		pour j allant de 1 à longueur(T[i]) faire
-			T[i][j] <- i+j;
-		fin pour
+		T[i] <- 2;
+	fin pour
+	pour tout x dans T faire 
+		écrire("la valeur est :");
+		écrire(x);
 	fin pour
 fin

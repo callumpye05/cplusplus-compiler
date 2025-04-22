@@ -63,6 +63,12 @@
 "Tableau"    { std::cerr << "lexer: Found 'Tableau' (TABLEAU_CTOR)\n"; return TABLEAU_CTOR; }
 "tableaux d'"      { std::cerr << "lexer: Found 'tableaux d'' (TABLEAU_TYPE)\n"; return TABLEAU_TYPE; }
 "tableaux de"      { std::cerr << "lexer: Found 'tableaux de' (TABLEAU_TYPE)\n"; return TABLEAU_TYPE; }
+"tout"   { std::cerr << "lexer: Found 'tout' (TOUT)\n"; return TOUT; }
+"dans"   { std::cerr << "lexer: Found 'dans' (DANS)\n"; return DANS; }
+"fonction"   { std::cerr << "lexer: Found 'fonction'\n"; return FONCTION; }
+"procédure"  { std::cerr << "lexer: Found 'procédure'\n"; return PROCEDURE; }
+"retourner"  { std::cerr << "lexer: Found 'retourner'\n"; return RETOURNER; }
+
 
 
 
