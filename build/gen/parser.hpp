@@ -38,7 +38,7 @@
 # define YY_YY_BUILD_GEN_PARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 #if YYDEBUG
 extern int yydebug;
@@ -115,8 +115,10 @@ union YYSTYPE
     std::vector<Expression*>* expression_list;
     std::vector<std::pair<Expression*, Sequence*>>* elseIfList;  
     std::vector<Parameter>* param_list;
+    std::vector<Instruction*>* function_list;
 
-#line 120 "build/gen/parser.hpp"
+
+#line 122 "build/gen/parser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;

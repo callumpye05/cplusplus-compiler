@@ -111,6 +111,7 @@ public:
 
   virtual std::string cpp_code() const {return "";}
   virtual algo_types infer_type(const Program&) const {return algo_types::ERROR;}
+  virtual bool validate(const Program&) const { return true; }
 };
 
 
@@ -560,6 +561,36 @@ struct Return : public Instruction {
 	bool validate(const Program&) const override;
 };
 
+struct FunctionCall : public Expression {
+    std::string name;
+    std::vector<Expression*> arguments;
+
+    FunctionCall(const std::string& n, const std::vector<Expression*>& args)
+        : name(n), arguments(args) {}
+
+    ~FunctionCall() override {
+        for (auto* arg : arguments)
+            delete arg;
+    }
+
+    std::string cpp_code() const override; 
+};
+
+struct ProcedureCall : public Instruction {
+    std::string name;
+    std::vector<Expression*> arguments;
+
+    ProcedureCall(const std::string& n, const std::vector<Expression*>& args)
+        : name(n), arguments(args) {}
+
+    ~ProcedureCall() override {
+        for (auto* expr : arguments) delete expr;
+    }
+
+    std::string cpp_code(const std::string&) const override;
+};
+
+
 
 
 
@@ -578,6 +609,7 @@ struct Program {
   // your existing fields
   const std::vector<Declaration*> declarations;
   const Instruction*      body;
+  std::vector<Instruction*> functions;
 
   // new symbol‑table mapping var names → their declared types
   std::map<std::string,algo_types> symtab;
@@ -595,6 +627,7 @@ struct Program {
   // dtor stays the same
   ~Program() {
     for (auto* d : declarations) delete d;
+    for (Instruction* f : functions) delete f;
     if (body) delete body;
   }
 

@@ -1,16 +1,21 @@
-
-algorithme //array
+procedure afficher_somme(tab : tableau de entier)
 variables
-	T : tableau de entier
-	i : entier
-	x : entier
+  resultat : entier
 début
-	T <- Tableau(10);
-	pour i allant de 1 à longueur(T) faire
-		T[i] <- 2;
-	fin pour
-	pour tout x dans T faire 
-		écrire("la valeur est :");
-		écrire(x);
-	fin pour
+  resultat <- somme(tab);
+  écrire("Résultat : ");
+  écrire(resultat);
+fin procedure
+
+algorithme
+variables
+  T : tableau de entier
+  i : entier
+début
+  T <- Tableau(10);
+  pour i allant de 1 à longueur(T) faire
+    T[i] <- 2;
+  fin pour
+  afficher_somme(T);
 fin
+

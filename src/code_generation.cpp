@@ -230,11 +230,58 @@ std::string ForEach::cpp_code(const std::string& indent) const  {
         oss << indent << "}\n";
         return oss.str();
     }
-    
 
-std::string Return::cpp_code() const {
-    return "return " + value->cpp_code() + ";\n";
+std::string FunctionDefinition::cpp_code(const std::string& indent) const {
+    std::ostringstream out;
+    out << indent << return_type.to_cpp_type() << " " << name << "(";
+    for (size_t i = 0; i < params.size(); ++i) {
+        out << params[i].type.to_cpp_type() << " " << params[i].name;
+        if (i + 1 < params.size()) out << ", ";
+    }
+    out << ") {\n";
+    out << body->cpp_code(indent + "  ");
+    out << indent << "}\n";
+    return out.str();
 }
+
+std::string ProcedureDefinition::cpp_code(const std::string& indent) const {
+    std::ostringstream out;
+    out << indent << "void " << name << "(";
+    for (size_t i = 0; i < params.size(); ++i) {
+        out << params[i].type.to_cpp_type() << " " << params[i].name;
+        if (i + 1 < params.size()) out << ", ";
+    }
+    out << ") {\n";
+    out << body->cpp_code(indent + "  ");
+    out << indent << "}\n";
+    return out.str();
+}    
+
+std::string Return::cpp_code(const std::string& indent) const {
+    return indent + "return " + value->cpp_code() + ";\n";
+}
+
+std::string FunctionCall::cpp_code() const {
+    std::string code = name + "(";
+    for (size_t i = 0; i < arguments.size(); ++i) {
+        if (i > 0) code += ", ";
+        code += arguments[i]->cpp_code();  // <- FIXED: No argument
+    }
+    code += ")";
+    return code;
+}
+
+std::string ProcedureCall::cpp_code(const std::string&) const  {
+        std::string code = name + "(";
+        for (size_t i = 0; i < arguments.size(); ++i) {
+            if (i > 0) code += ", ";
+            code += arguments[i]->cpp_code();
+        }
+        code += ");";
+        return code;
+    }
+
+
 
 
 
@@ -245,15 +292,29 @@ std::string Return::cpp_code() const {
  ***************************************************/
 
 std::string Program::cpp_code() const {
-  std::string s =
-    "#include<iostream>\n"
-    "#include<string>\n"
-    "#include<vector>\n\n"  // ← Always added
-    "int main() {\n";
-       for(const Declaration* declaration : declarations)
-         s += declaration->cpp_code("  ") + ";\n";
-       return s +
-       body->cpp_code(std::string("  ")) +
-    "  return 0;\n"
-    "}\n";
+    std::ostringstream out;
+
+    // Standard includes
+    out << "#include<iostream>\n";
+    out << "#include<string>\n";
+    out << "#include<vector>\n\n";
+
+    // Function and procedure definitions
+    for (const Instruction* func : functions) {
+        out << func->cpp_code("") << "\n";
+    }
+
+    // Main function
+    out << "int main() {\n";
+
+    for (const Declaration* declaration : declarations) {
+        out << "  " << declaration->cpp_code("  ") << ";\n";
+    }
+
+    out << body->cpp_code("  ");
+    out << "  return 0;\n";
+    out << "}\n";
+
+    return out.str();
 }
+

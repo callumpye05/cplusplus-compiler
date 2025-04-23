@@ -66,7 +66,7 @@
 "tout"   { std::cerr << "lexer: Found 'tout' (TOUT)\n"; return TOUT; }
 "dans"   { std::cerr << "lexer: Found 'dans' (DANS)\n"; return DANS; }
 "fonction"   { std::cerr << "lexer: Found 'fonction'\n"; return FONCTION; }
-"procédure"  { std::cerr << "lexer: Found 'procédure'\n"; return PROCEDURE; }
+"procedure"  { std::cerr << "lexer: Found 'procédure'\n"; return PROCEDURE; }
 "retourner"  { std::cerr << "lexer: Found 'retourner'\n"; return RETOURNER; }
 
 
