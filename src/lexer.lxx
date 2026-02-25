@@ -33,13 +33,13 @@
 ";"	       return PT_VIRGULE;
 ":"	       return DEUX_POINTS;
 "<-"	       return AFFECTATION;
-"+"	       return PLUS;
-"-"	       return MOINS;
-"*"	       return MULTIPLIE;
-"="	       return EGAL;
-"<"	       return INFERIEUR;
-"et"	       return ET;
-"ou"	       return OU;
+"+"	       return OP_PLUS;
+"-"	       return OP_MOINS;
+"*"	       return OP_FOIS;
+"="	       return OP_EGAL;
+"<"	       return OP_INFERIEUR;
+"et"	       return OP_ET;
+"ou"	       return OP_OU;
 "si"	       return SI;
 "alors"	       return ALORS;
 "sinon"	       return SINON;
@@ -49,9 +49,9 @@
 "faire"	       return FAIRE;
 "écrire"       return ECRIRE;
 "lire"	       return LIRE;
-"longueur"     return LONGUEUR;
-"Longueur"     return LONGUEURV;
-"non"    { std::cerr << "lexer:  'non' (NON)\n"; return NON; }     /* AFFICHAGE POUR DEBUG */
+"longueur"     return OP_LONGUEUR;
+"Longueur"     return OP_LONGUEURV;
+"non"    { std::cerr << "lexer:  'non' (NON)\n"; return OP_NON; }     /* AFFICHAGE POUR DEBUG */
 ","      { std::cerr << "lexer: ',' (VIRGULE)\n"; return VIRGULE; }  
 "pour"   { std::cerr << "lexer:  'pour' (POUR)\n"; return POUR; } 
 "allant" { std::cerr << "lexer:  'allant' (ALLANT)\n"; return ALLANT; } 

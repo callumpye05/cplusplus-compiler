@@ -128,7 +128,7 @@ struct Literal : public Expression {
   Literal(algo_types type, const std::string& literal)
     : type(type), literal(literal) {}
 
-  ~Literal() override = default;
+  
 
   
   std::string cpp_code(const Program& prog) const override;
@@ -144,7 +144,7 @@ struct Identifier : public Expression {
   Identifier(const std::string& name)
     : name(name) {}
 
-  ~Identifier() override = default;
+  
   std::string cpp_code(const Program& prog) const override;
   algo_types infer_type(const Program&) const override;
 };
@@ -156,7 +156,7 @@ struct Identifier : public Expression {
  * Syntaxe : oper(argument)
  */
 struct UnaryOperation : public Expression {
-  enum operators { MOINS, LONGUEUR, NON, LONGUEURV };
+  enum operators { AST_MOINS, AST_LONGUEUR, AST_NON, AST_LONGUEURV };
   
   const operators oper;
   const Expression* argument;
@@ -180,7 +180,7 @@ struct UnaryOperation : public Expression {
 struct BinaryOperation : public Expression {
 
   enum operators {
-    PLUS, MOINS, FOIS, OU, ET, EGAL, INFERIEUR, INDICE
+    AST_PLUS, AST_MOINS, AST_FOIS, AST_OU, AST_ET, AST_EGAL, AST_INFERIEUR, AST_INDICE
   };
 
   const operators oper;
@@ -228,7 +228,7 @@ struct Declaration : public Instruction {
   Declaration(const std::string& variable_name, algo_types type)
     : variable_name(variable_name), type(type) {}
 
-  ~Declaration() override = default;
+
   std::string cpp_code(const std::string& indent, const Program& prog) const override;
 
 };
@@ -284,7 +284,7 @@ struct Read : public Instruction {
   Read(const std::string& variable)
     : variable(variable) {}
 
-  ~Read() override = default;
+  
   std::string cpp_code(const std::string& indent, const Program& prog) const override;
   bool validate(const Program&) const override;
 
@@ -445,7 +445,7 @@ struct ArrayAssignment : public Instruction {
 
 // Pour la longueur des tableaux
 struct ArrayLength : public UnaryOperation {
-    ArrayLength(Expression* tableau) : UnaryOperation(LONGUEUR, tableau) {}
+    ArrayLength(Expression* tableau) : UnaryOperation(AST_LONGUEUR, tableau) {}
     algo_types infer_type(const Program& prog) const override;
 };
 

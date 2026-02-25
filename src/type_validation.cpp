@@ -30,7 +30,7 @@ algo_types UnaryOperation::infer_type(const Program& context) const {
   if(argument_type == algo_types::ERROR) return algo_types::ERROR;
   
   switch(oper) {
-  case LONGUEUR:
+  case AST_LONGUEUR:
   if(argument_type.kind == algo_types::STRING || argument_type.kind == algo_types::ARRAY)
     return algo_types(algo_types::INTEGER);
 
@@ -38,7 +38,7 @@ algo_types UnaryOperation::infer_type(const Program& context) const {
   return algo_types(algo_types::ERROR);
   
   
-  case LONGUEURV:
+  case AST_LONGUEURV:
   	if(argument_type.kind == algo_types::ARRAY) 
   		return algo_types(algo_types::INTEGER);
   	std::cerr << "Erreur : la fonction Longueur doit être utilisée avec un tableau" << std::endl;
@@ -46,12 +46,12 @@ algo_types UnaryOperation::infer_type(const Program& context) const {
   	
 
 
-  case MOINS:
+  case AST_MOINS:
     if(argument_type == algo_types::INTEGER) return algo_types::INTEGER;
     std::cerr << "Erreur : l'opérateur unaire - doit être utilisé avec un entier" << std::endl;
     break;
     
-  case NON:
+  case AST_NON:
 	if (argument_type == algo_types::BOOLEAN) return algo_types::BOOLEAN;
     std::cerr << "Erreur : l'opérateur unaire ! doit être utilisé avec un booléen" << std::endl;
     break;
@@ -148,43 +148,43 @@ algo_types BinaryOperation::infer_type(const Program& context) const {
   if(left_type == algo_types::ERROR || right_type == algo_types::ERROR) return algo_types::ERROR;
   
   switch(oper) {
-  case PLUS: 
+  case AST_PLUS: 
     if(left_type == algo_types::INTEGER && right_type == algo_types::INTEGER) return algo_types::INTEGER;
     if(left_type == algo_types::STRING)  return algo_types::STRING;
     std::cerr << "Erreur : l'opérateur binaire + doit être utilisé avec des entiers ou des chaînes de caractères" << std::endl;
     break;
 
-  case MOINS:
+  case AST_MOINS:
     if(left_type == algo_types::INTEGER && right_type == algo_types::INTEGER) return algo_types::INTEGER;
     std::cerr << "Erreur : l'opérateur binaire - doit être utilisé avec des entiers" << std::endl;
     break;
     
-  case FOIS: 
+  case AST_FOIS: 
     if(left_type == algo_types::INTEGER && right_type == algo_types::INTEGER) return algo_types::INTEGER;
     std::cerr << "Erreur : l'opérateur binaire * doit être utilisé avec des entiers" << std::endl;
     break;
     
-  case ET:
+  case AST_ET:
     if(left_type == algo_types::BOOLEAN && right_type == algo_types::BOOLEAN) return algo_types::BOOLEAN;
     std::cerr << "Erreur : l'opérateur binaire et doit être utilisé avec des booléens" << std::endl;
     break;
     
-  case OU: 
+  case AST_OU: 
     if(left_type == algo_types::BOOLEAN && right_type == algo_types::BOOLEAN) return algo_types::BOOLEAN;
     std::cerr << "Erreur : l'opérateur binaire ou doit être utilisé avec des booléens" << std::endl;
     break;
 
-  case EGAL: 
+  case AST_EGAL: 
     if(left_type == right_type) return algo_types::BOOLEAN;
     std::cerr << "Erreur : l'opérateur binaire = doit être utilisé avec des valeurs de même type" << std::endl;
     break;
 
-  case INFERIEUR : 
+  case AST_INFERIEUR : 
     if(left_type == algo_types::INTEGER && right_type == algo_types::INTEGER) return algo_types::BOOLEAN;
     std::cerr << "Erreur : l'opérateur binaire < être utilisé avec des entiers" << std::endl;
     break;
 
-   case INDICE : 
+   case AST_INDICE : 
     if(left_type.kind == algo_types::ARRAY) {
         if(right_type == algo_types::INTEGER) {
             if(left_type.parameters.empty()) {

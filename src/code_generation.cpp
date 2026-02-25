@@ -50,7 +50,7 @@ std::string Declaration::cpp_code(const std::string& indent, const Program& /*pr
 std::string UnaryOperation::cpp_code(const Program& prog) const {
     std::cerr << "Generating code for UnaryOperation: oper = " << oper << std::endl;
     switch (oper) {
-        case LONGUEUR:
+        case AST_LONGUEUR:
             
             //analyse sémantique: on adapte la méthode C++ selon le type
             //Les tableaux(vector) utilisent .size() tandis que les chaines utilisent .length()
@@ -59,11 +59,11 @@ std::string UnaryOperation::cpp_code(const Program& prog) const {
             }
             return "(" + argument->cpp_code(prog) + ").length()";
         
-        case LONGUEURV:
+        case AST_LONGUEURV:
             return "(" + argument->cpp_code(prog) + ").size()";
-        case MOINS:
+        case AST_MOINS:
             return "-(" + argument->cpp_code(prog) + ")";
-        case NON:
+        case AST_NON:
             return "!(" + argument->cpp_code(prog) + ")";
         default:
             throw std::invalid_argument("Invalid unary operation");
@@ -75,14 +75,14 @@ std::string BinaryOperation::cpp_code(const Program& prog) const {
   //utilisation systématique de parenthèses pour garantir que les priorités 
   //de l'algorithme original sont préservées lors de la compilation
   switch(oper) {
-  case PLUS      : return "(" + left->cpp_code(prog) + ") + ("  + right->cpp_code(prog) + ")";
-  case MOINS     : return "(" + left->cpp_code(prog) + ") - ("  + right->cpp_code(prog) + ")";
-  case FOIS      : return "(" + left->cpp_code(prog) + ") * ("  + right->cpp_code(prog) + ")";
-  case ET        : return "(" + left->cpp_code(prog) + ") && (" + right->cpp_code(prog) + ")";
-  case OU        : return "(" + left->cpp_code(prog) + ") || (" + right->cpp_code(prog) + ")";
-  case EGAL      : return "(" + left->cpp_code(prog) + ") == (" + right->cpp_code(prog) + ")";
-  case INFERIEUR : return "(" + left->cpp_code(prog) + ") < ("  + right->cpp_code(prog) + ")";
-  case INDICE    : return "(" + left->cpp_code(prog) + ")[("    + right->cpp_code(prog) + ")-1]";
+  case AST_PLUS      : return "(" + left->cpp_code(prog) + ") + ("  + right->cpp_code(prog) + ")";
+  case AST_MOINS     : return "(" + left->cpp_code(prog) + ") - ("  + right->cpp_code(prog) + ")";
+  case AST_FOIS      : return "(" + left->cpp_code(prog) + ") * ("  + right->cpp_code(prog) + ")";
+  case AST_ET        : return "(" + left->cpp_code(prog) + ") && (" + right->cpp_code(prog) + ")";
+  case AST_OU        : return "(" + left->cpp_code(prog) + ") || (" + right->cpp_code(prog) + ")";
+  case AST_EGAL      : return "(" + left->cpp_code(prog) + ") == (" + right->cpp_code(prog) + ")";
+  case AST_INFERIEUR : return "(" + left->cpp_code(prog) + ") < ("  + right->cpp_code(prog) + ")";
+  case AST_INDICE    : return "(" + left->cpp_code(prog) + ")[("    + right->cpp_code(prog) + ")-1]";
   }
   return "";
 }

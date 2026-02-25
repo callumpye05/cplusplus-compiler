@@ -2,7 +2,7 @@ CXX = g++
 LEX = flex
 YACC = bison
 
-CXXFLAGS = -W -Wall -Wextra -g -Isrc -I$(GEN_DIR) -MMD -MP
+CXXFLAGS = -std=c++11 -W -Wall -Wextra -g -Isrc -I$(GEN_DIR) -MMD -MP
 LDFLAGS = -ll -lm
 
 SRC_DIR = src
