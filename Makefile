@@ -2,7 +2,7 @@ CXX = g++
 LEX = flex
 YACC = bison
 
-CXXFLAGS = -W -Wall -Wextra -g -Isrc -MMD -MP
+CXXFLAGS = -W -Wall -Wextra -g -Isrc -I$(GEN_DIR) -MMD -MP
 LDFLAGS = -ll -lm
 
 SRC_DIR = src
@@ -16,40 +16,44 @@ TARGET = algo
 
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS = $(SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
-DEPS = $(OBJECTS:.o=.d) $(GENERATED_OBJECTS:.o=.d)
+DEPS = $(OBJECTS:.o=.d) $(OBJ_DIR)/$(LEXER).d $(OBJ_DIR)/$(PARSER).d
 
 .PHONY: all clean cleanall
 
 all: $(TARGET)
 
-# Generate lexer and parser
-
+#génération du lexer et du parser
+# mkdir -p pour s'assurer que build/gen existe
 $(GEN_DIR)/$(LEXER).cpp: $(SRC_DIR)/$(LEXER).lxx
+	@mkdir -p $(GEN_DIR)
 	$(LEX) -o$(GEN_DIR)/$(LEXER).cpp $(SRC_DIR)/$(LEXER).lxx
 
 $(GEN_DIR)/$(PARSER).cpp: $(SRC_DIR)/$(PARSER).yxx
+	@mkdir -p $(GEN_DIR)
 	$(YACC) --output=$(GEN_DIR)/$(PARSER).cpp --defines=$(GEN_DIR)/$(PARSER).hpp $(SRC_DIR)/$(PARSER).yxx
 
-# Compile c++ files
+# Compilation des fichiers C++
+#mkdir -p pour s'assurer que build/obj existe
 $(OBJ_DIR)/$(LEXER).o: $(GEN_DIR)/$(LEXER).cpp
+	@mkdir -p $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/$(PARSER).o: $(GEN_DIR)/$(PARSER).cpp
+	@mkdir -p $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -Wno-free-nonheap-object -c $< -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Link executable
+# Lien de l'executable
 $(TARGET): $(OBJ_DIR)/$(PARSER).o $(OBJ_DIR)/$(LEXER).o $(OBJECTS)
 	$(CXX) $(OBJECTS) $(OBJ_DIR)/$(LEXER).o $(OBJ_DIR)/$(PARSER).o -o $@
 
 -include $(DEPS)
 
-# Delete generated files
 clean:
-	rm -f $(OBJ_DIR)/*
-	rm -f $(GEN_DIR)/*
+	rm -rf build/
 
 cleanall: clean
 	rm -f $(TARGET)
