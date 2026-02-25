@@ -1,7 +1,7 @@
 /**
  * \file lexer.lxx
  * \brief Implementation of a lexer for the algo language
- * \author Matthieu Perrin 
+ * \author Callum PYE
  * \version 1
  * \date 17-02-2025
  */
@@ -16,12 +16,12 @@
 
 %%
 
- /* Removal of characters that should not be parsed */
+ /* Caractères a ignorer */
 [ \t\n]                  { /* Spaces */ }
 \/\/.*                   { /* One-line comments */ }
 \/\*([^\*]|\*[^\/])*\*\/ { /* Multi-line comments */ }
 
- /* Operators and keywords of the ALGO language */
+ /* Operators et ot clé du langage algo */
 "algorithme"   return ALGORITHME;
 "variables"    return VARIABLES;
 "début"	       return DEBUT;
@@ -50,24 +50,26 @@
 "écrire"       return ECRIRE;
 "lire"	       return LIRE;
 "longueur"     return LONGUEUR;
-"non"    { std::cerr << "lexer: Found 'non' (NON)\n"; return NON; }     /* AFFICHAGE POUR DEBUG */
-","      { std::cerr << "lexer: Found ',' (VIRGULE)\n"; return VIRGULE; }  
-"pour"   { std::cerr << "lexer: Found 'pour' (POUR)\n"; return POUR; } 
-"allant" { std::cerr << "lexer: Found 'allant' (ALLANT)\n"; return ALLANT; } 
-"de"     { std::cerr << "lexer: Found 'de' (DE)\n"; return DE; }  
-"à"      { std::cerr << "lexer: Found 'à' (A)\n"; return A; }  
-"avec"   { std::cerr << "lexer: Found 'avec' (AVEC)\n"; return AVEC; } 
-"un"     { std::cerr << "lexer: Found 'un' (UN)\n"; return UN; } 
-"pas"    { std::cerr << "lexer: Found 'pas' (PAS)\n"; return PAS; } 
-"tableau de" { std::cerr << "lexer: Found 'tableau de ' (TABLEAU_TYPE)\n"; return TABLEAU_TYPE; }
-"Tableau"    { std::cerr << "lexer: Found 'Tableau' (TABLEAU_CTOR)\n"; return TABLEAU_CTOR; }
-"tableaux d'"      { std::cerr << "lexer: Found 'tableaux d'' (TABLEAU_TYPE)\n"; return TABLEAU_TYPE; }
-"tableaux de"      { std::cerr << "lexer: Found 'tableaux de' (TABLEAU_TYPE)\n"; return TABLEAU_TYPE; }
-"tout"   { std::cerr << "lexer: Found 'tout' (TOUT)\n"; return TOUT; }
-"dans"   { std::cerr << "lexer: Found 'dans' (DANS)\n"; return DANS; }
-"fonction"   { std::cerr << "lexer: Found 'fonction'\n"; return FONCTION; }
-"procedure"  { std::cerr << "lexer: Found 'procédure'\n"; return PROCEDURE; }
-"retourner"  { std::cerr << "lexer: Found 'retourner'\n"; return RETOURNER; }
+"Longueur"     return LONGUEURV;
+"non"    { std::cerr << "lexer:  'non' (NON)\n"; return NON; }     /* AFFICHAGE POUR DEBUG */
+","      { std::cerr << "lexer: ',' (VIRGULE)\n"; return VIRGULE; }  
+"pour"   { std::cerr << "lexer:  'pour' (POUR)\n"; return POUR; } 
+"allant" { std::cerr << "lexer:  'allant' (ALLANT)\n"; return ALLANT; } 
+"de"     { std::cerr << "lexer:  'de' (DE)\n"; return DE; }  
+"à"      { std::cerr << "lexer:  'à' (A)\n"; return A; }  
+"avec"   { std::cerr << "lexer:  'avec' (AVEC)\n"; return AVEC; } 
+"un"     { std::cerr << "lexer:  'un' (UN)\n"; return UN; } 
+"pas"    { std::cerr << "lexer:  'pas' (PAS)\n"; return PAS; } 
+"tableaux d'entiers" { std::cerr << "lexer:  'tableau d'entiers' (TABLEAU_DENTIERS)\n"; return TABLEAU_DENTIERS;}
+"tableau d'entiers" { std::cerr << "lexer:  'tableau d'entiers' (TABLEAU_DENTIERS)\n"; return TABLEAU_DENTIERS;}
+"tableau de" { std::cerr << "lexer:  'tableau de ' (TABLEAU_TYPE)\n"; return TABLEAU_TYPE; }
+"Tableau"    { std::cerr << "lexer:  'Tableau' (TABLEAU_CTOR)\n"; return TABLEAU_CTOR; }
+"tableaux de"      { std::cerr << "lexer:  'tableaux de' (TABLEAU_TYPE)\n"; return TABLEAU_TYPE; }
+"tout"   { std::cerr << "lexer:  'tout' (TOUT)\n"; return TOUT; }
+"dans"   { std::cerr << "lexer:  'dans' (DANS)\n"; return DANS; }
+"fonction"   { std::cerr << "lexer:  'fonction'\n"; return FONCTION; }
+"procedure"  { std::cerr << "lexer:  'procédure'\n"; return PROCEDURE; }
+"retourner"  { std::cerr << "lexer:  'retourner'\n"; return RETOURNER; }
 
 
 
@@ -77,7 +79,7 @@
  /* Type names */
 
 "booléen" { yylval.type=new algo_types(algo_types::BOOLEAN); return TYPE; }
-"entier" { std::cerr << "lexer: Found 'entier'\n"; yylval.type=new algo_types(algo_types::INTEGER); return TYPE; }
+"entier" { std::cerr << "lexer:  'entier'\n"; yylval.type=new algo_types(algo_types::INTEGER); return TYPE; }
 "caractère" { yylval.type=new algo_types(algo_types::CHARACTER); return TYPE; }
 "chaîne" { yylval.type=new algo_types(algo_types::STRING); return TYPE; }
 "entiers"       { yylval.type = new algo_types(algo_types::INTEGER); return TYPE; }

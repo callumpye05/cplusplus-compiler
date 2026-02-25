@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<style-scheme id="TPLea" _name="TPLea" version="1.0">
+  <_description>A simple style for a TP</_description>
+
+  <!-- Color palette -->
+  <color name="back"                       value="#2e3436"/>
+  <color name="current_line"               value="#555753"/>
+  <color name="text"                       value="#a1a1a1"/>
+  <color name="lines"                      value="#555753"/>
+  <color name="black"                      value="#000000"/>
+  <color name="cursor"                     value="#d3d7cf"/>
+  <color name="match"                      value="#eeeeec"/>
+  <color name="comment"                    value="#888a85"/>
+  <color name="keyword"                    value="#729fcf"/>  <!-- Bleu pour les mots-clés -->
+  <color name="identifier"                 value="#eeeeec"/>  <!-- Blanc cassé pour les identifiants -->
+  <color name="type"                       value="#9c9adf"/>  <!-- Mauve pour les types -->
+  <color name="boolean"                    value="#91d3a4"/>  <!-- Vert pour les booléens -->
+  <color name="number"                     value="#efde8b"/>  <!-- Jaune pour les nombres -->
+  <color name="character"                  value="#ecab66"/>  <!-- Orange pour les caractères -->
+  <color name="string"                     value="#ff8585"/>  <!-- Rose pour les chaînes -->
+  
+  <!-- Global Styles -->
+  <style name="text"                       background="back" foreground="text"/>
+  <style name="current-line"               background="current_line"/>
+  <style name="line-numbers"               background="black" foreground="lines"/>
+  <style name="current-line-number"        background="black" foreground="lines" bold="true"/>
+  <style name="cursor"                     foreground="cursor"/>
+  <style name="search-match"               background="match"/>
+  <style name="bracket-match"              foreground="green_5" bold="true"/>
+  
+  <!-- Element styles -->
+  <style name="def:keyword"                foreground="keyword" bold="true"/>
+  <style name="def:comment"                foreground="comment" italic="true"/>
+  <style name="def:identifier"             foreground="identifier" italic="true"/>
+  <style name="def:type"                   foreground="type" bold="true"/>
+  <style name="def:number"                 foreground="number"/>
+  <style name="def:boolean"                foreground="boolean" bold="true"/>
+  <style name="def:string"                 foreground="string"/>
+  <style name="def:character"              foreground="character"/>
+</style-scheme>

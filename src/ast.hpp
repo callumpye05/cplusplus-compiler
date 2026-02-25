@@ -4,9 +4,9 @@
 /**
  * \file ast.hpp
  * \brief Header file containing the declarations of the abstract syntax tree.
- * \author Matthieu Perrin 
- * \version 1
- * \date 17-02-2025
+ * \author Callum PYE 485K 
+ * \version 2
+ * \date 25-04-2025
  */
 
 #include <iostream>
@@ -31,6 +31,7 @@ struct algo_types {
 
   type_kind kind;
   std::vector<algo_types> parameters;
+  algo_types() : kind(ERROR), parameters() {}
 
   algo_types(type_kind kind) : kind(kind), parameters() {}
   algo_types(type_kind kind, std::initializer_list<algo_types> parameters) : kind(kind), parameters(parameters) {}
@@ -62,16 +63,12 @@ struct algo_types {
         }
     }
 
-	
-
-    // Add this method to get the base type (for nested arrays)
     algo_types get_base_type() const {
         if (kind != ARRAY || parameters.empty()) 
             return *this;
         return parameters[0].get_base_type();
     }
-
-    // Add this method to get array dimensions
+    
     size_t get_array_depth() const {
         if (kind != ARRAY) return 0;
         if (parameters.empty()) return 1;
@@ -85,7 +82,7 @@ struct algo_types {
     case CHARACTER: return "char";
     case STRING:    return "std::string";
     case ARRAY:
-      if (parameters.empty()) return "std::vector<int>"; // default fallback
+      if (parameters.empty()) return "std::vector<int>";
       return "std::vector<" + parameters[0].to_cpp_type() + ">";
     default: return "/*unknown*/";
   }
@@ -109,7 +106,7 @@ protected:
 public:
   virtual ~Expression() = default;
 
-  virtual std::string cpp_code() const {return "";}
+  virtual std::string cpp_code(const Program& prog) const { return ""; }
   virtual algo_types infer_type(const Program&) const {return algo_types::ERROR;}
   virtual bool validate(const Program&) const { return true; }
 };
@@ -125,7 +122,6 @@ public:
  *  - string within double quotes, e.g. <"hello world!">
  */
 struct Literal : public Expression {
-  
   const algo_types type;
   const std::string literal;
   
@@ -134,44 +130,36 @@ struct Literal : public Expression {
 
   ~Literal() override = default;
 
-  std::string cpp_code() const override;
+  
+  std::string cpp_code(const Program& prog) const override;
   algo_types infer_type(const Program&) const override;
-
 };
 
 /*
- * Represents an identifier, i.e. a variable name of an algo program
+ * Un identifiant -> nom de variable dnas le programme
  */
 struct Identifier : public Expression {
-
   const std::string name;
 
   Identifier(const std::string& name)
     : name(name) {}
 
   ~Identifier() override = default;
-
-  std::string cpp_code() const override;
+  std::string cpp_code(const Program& prog) const override;
   algo_types infer_type(const Program&) const override;
-    
 };
 
 
 /*
- * Represents a unary operation an algo program
- * The accepted operators are provided in the operators enumeration  
- * Syntax : 
- *   oper(argument)
+ * Represente une opération unaire
+ * 
+ * Syntaxe : oper(argument)
  */
 struct UnaryOperation : public Expression {
-
-  enum operators {
-    MOINS, LONGUEUR, NON
-  };
+  enum operators { MOINS, LONGUEUR, NON, LONGUEURV };
   
   const operators oper;
   const Expression* argument;
-  
   UnaryOperation(operators oper, const Expression* argument)
     : oper(oper), argument(argument) {}
 
@@ -179,20 +167,15 @@ struct UnaryOperation : public Expression {
     if(argument) delete argument;
   }
 
-  std::string cpp_code() const override;
+  std::string cpp_code(const Program& prog) const override;
   algo_types infer_type(const Program&) const override;
-  
 };
 
 
-
 /*
- * Represents a binary operation an algo program
- * The accepted operators are provided in the operators enumeration  
- * Syntax : 
- *   left oper right
- * Or :
- *   left[right] 
+ * Represente operation binaire 
+ * syntaxe : left oper right
+ * ou: left[right] 
  */
 struct BinaryOperation : public Expression {
 
@@ -203,7 +186,6 @@ struct BinaryOperation : public Expression {
   const operators oper;
   const Expression* left;
   const Expression* right;
-
   BinaryOperation(operators oper, const Expression* left, const Expression* right)
     : oper(oper), left(left), right(right) {}
 
@@ -211,8 +193,7 @@ struct BinaryOperation : public Expression {
     if(left) delete left;
     if(right) delete right;
   }
-
-  std::string cpp_code() const override;
+  std::string cpp_code(const Program& prog) const override;
   algo_types infer_type(const Program&) const override;
   
 };
@@ -220,62 +201,52 @@ struct BinaryOperation : public Expression {
 
 /**********************************
  *                                *
- * Definition of the instructions *
+ * Definition des instructions    *
  *                                *
  **********************************/
 
 
 
-// Abstract class (interface) that represents the instructions of an algo program
+// classe abstraite qui represente les instruciton du programme
 class Instruction {
 protected:
   Instruction() = default;
 public:
   virtual ~Instruction() = default;
-
-  virtual std::string cpp_code(const std::string&) const {return "";}
+  virtual std::string cpp_code(const std::string& indent, const Program& prog) const { return ""; }
   virtual bool validate(const Program&) const {return true;}
 };
 
 
 /*
- * Represents a variable declaration
- * Syntax : 
- * variable_name : type
+ * represente déclaration de variable
+ * Syntaxe : variable_name : type
  */
 struct Declaration : public Instruction {
-  
   const std::string variable_name;
   const algo_types type;
-
   Declaration(const std::string& variable_name, algo_types type)
     : variable_name(variable_name), type(type) {}
 
   ~Declaration() override = default;
-
-  std::string cpp_code(const std::string&) const override;
+  std::string cpp_code(const std::string& indent, const Program& prog) const override;
 
 };
 
 
 /*
- * Represents a sequence of instructions in an algo program
- * Syntax : 
- * instructions[1]
- * ...
- * instructions[n]
+ * Represente une séquence d'instruction dans un programme
+ * Syntaxe : instructions[1] ... instructions[n]
  */
 struct Sequence : public Instruction {
   
   std::vector<Instruction*> instructions;
-
   Sequence() {}
-
   ~Sequence() override {
     for(Instruction* instruction : instructions) delete instruction;
   }
   
-  std::string cpp_code(const std::string&) const override;
+  std::string cpp_code(const std::string& indent, const Program& prog) const override;
   bool validate(const Program&) const override;
   
 };
@@ -283,9 +254,8 @@ struct Sequence : public Instruction {
 
 
 /*
- * Represents a variable assignment in an algo program
- * Syntax : 
- * variable <- value;
+ * Représente affectation de variable
+ * Syntaxe : variable <- valeur;
  */
 struct Assignment : public Instruction {
 
@@ -298,51 +268,43 @@ struct Assignment : public Instruction {
   ~Assignment() override {
     if(value) delete value;
   }
-  
-  std::string cpp_code(const std::string&) const override;
+  std::string cpp_code(const std::string& indent, const Program& prog) const override;
   bool validate(const Program&) const override;
 
 };
 
 
-
 /*
- * Represents a call of an algo program to the procedure lire
- * Syntax : 
- * lire variable;
+ * represente un appel a la procédure lire
+ * Syntaxe : lire variable;
  */
 struct Read : public Instruction {
 
   const std::string variable;
-
   Read(const std::string& variable)
     : variable(variable) {}
 
   ~Read() override = default;
-  
-  std::string cpp_code(const std::string&) const override;
+  std::string cpp_code(const std::string& indent, const Program& prog) const override;
   bool validate(const Program&) const override;
 
 };
 
 /*
- * Represents a call of an algo program to the procedure écrire
- * Syntax : 
- * écrire(argument);
+ * représente un appel à la procédure écrire
+ * Syntaxe : écrire(argument);
  */
 struct Write : public Instruction {
   std::vector<Expression*> arguments;
-  
   Write(const std::vector<Expression*>& args)
     : arguments(args) {}
 
   ~Write() override {
     for (Expression* arg : arguments) {
-            if (arg) delete arg;  // Delete each argument
+            if (arg) delete arg; 
         }
   }
-  
-  std::string cpp_code(const std::string&) const override;
+  std::string cpp_code(const std::string& indent, const Program& prog) const override;
 
 };
 
@@ -350,8 +312,8 @@ struct Write : public Instruction {
 
 
 /*
- * Represents a conditional structure of an algo program
- * Syntax : 
+ * Represente un conditionnel 
+ * Syntaxe : 
  * si condition alors
  *   thenBranch
  * sinon 
@@ -360,30 +322,26 @@ struct Write : public Instruction {
  */
 struct If : public Instruction {
 
-  const Expression*  condition;
+  const Expression* condition;
   const Instruction* thenBranch;
   std::vector<std::pair<const Expression*, const Instruction*>> elseIfs;
   const Instruction* elseBranch;
   
-  
-	//Juste le si normale
-	 If(const Expression* condition, const Instruction* thenBranch)
+
+   If(const Expression* condition, const Instruction* thenBranch)
         : condition(condition), thenBranch(thenBranch), elseBranch(nullptr) {
-            elseIfs = {};  // Initialise elseIfs comme une liste vide
+            elseIfs = {}; 
         }
-	
-	//un si sinon
    If(const Expression* condition, const Instruction* thenBranch, const Instruction* elseBranch)
-        : condition(condition), thenBranch(thenBranch), elseBranch(elseBranch) {
-            elseIfs = {};  // Initialise elseIfs comme une liste vide
+        : condition(condition),thenBranch(thenBranch), elseBranch(elseBranch) {
+            elseIfs ={};  
         }
-	// un si sinon si 
    If(const Expression* condition, const Instruction* thenBranch, 
        std::vector<std::pair<const Expression*, const Instruction*>> elseIfs, 
        const Instruction* elseBranch)
         : condition(condition), thenBranch(thenBranch), 
           elseIfs(elseIfs), elseBranch(elseBranch) {}
-
+  
   ~If() override {
   if (condition) delete condition;
         if (thenBranch) delete thenBranch;
@@ -392,26 +350,19 @@ struct If : public Instruction {
             if (elseIf.second) delete elseIf.second;
         }
         if (elseBranch) delete elseBranch;
-    }
-  std::string cpp_code(const std::string&) const override;
-  bool validate(const Program&) const override;
+  }
+  std::string cpp_code(const std::string& indent, const Program& prog) const override;
+  bool validate(const Program& prog) const override;
 
 };
 
-
-
 /*
- * Represents a while loop of an algo program
- * Syntax : 
- * tant que condition faire
- *   body
- * fin tant que
+ * Boucle tant que 
  */
 struct While : public Instruction {
   
   const Expression* condition;
   const Instruction* body;
-
   While(const Expression* condition, const Instruction* body)
     : condition(condition), body(body) {}
 
@@ -419,64 +370,58 @@ struct While : public Instruction {
       if(condition) delete condition;
       if(body) delete body;
   }
-
-  std::string cpp_code(const std::string&) const override;
-  bool validate(const Program&) const override;
+  std::string cpp_code(const std::string& indent, const Program& prog) const override;
+  bool validate(const Program& prog) const override;
 
 };
 
 struct For: public Instruction {
-	const std::string loop_var; 
-    const Expression* start;
+    const std::string loop_var; 
+    const Expression* start; 
     const Expression* end;
     const Expression* step;
     const Instruction* body;
     
-    For(const std::string loop_var , const Expression* start , const Expression* end , const Expression* step, const Instruction* body)
-		: loop_var(loop_var) , start(start) , end(end), step(step) , body(body) {}
-		
-	~For() override {
-		if(start) delete start;
-		if(end) delete end;
-		if(step) delete step;
-		if(body) delete body;
-	}	
-	std::string cpp_code(const std::string&) const override;
-	bool validate(const Program&) const override;
+    For(const std::string loop_var , const Expression* start , const Expression* end ,const Expression* step, const Instruction* body)
+        : loop_var(loop_var) ,start(start) ,end(end), step(step) , body(body) {}
+        
+    ~For() override {
+        if(start) delete start;
+        if(end) delete end;
+        if(step) delete step;
+        if(body) delete body;
+    }   
+    std::string cpp_code(const std::string& indent, const Program& prog) const override;
+    bool validate(const Program& prog) const override;
 };
 
-struct ArrayCreation : public Expression {
+struct ArrayCreation : public Expression{
     algo_types array_type;
     std::vector<Expression*> dimensions;  
     
-    
-    
-   ArrayCreation(const algo_types& arr_type, std::vector<Expression*> dims)
+    ArrayCreation(const algo_types& arr_type, std::vector<Expression*> dims)
         : array_type(arr_type), dimensions(dims) {}
     
     ~ArrayCreation() override {
         for (auto dim : dimensions) delete dim;
     }
-    
-    std::string cpp_code() const override;
-    algo_types infer_type(const Program&) const override;
+    std::string cpp_code(const Program& prog) const override;
+    algo_types infer_type(const Program& prog) const override;
 };
 
 // Pour l'accès aux tableaux
 struct ArrayAccess : public Expression {
     Expression* array;
-    std::vector<Expression*> indices;  // Multiple indices for nested arrays
+    std::vector<Expression*> indices; 
     
     ArrayAccess(Expression* arr, std::vector<Expression*> idx)
         : array(arr), indices(idx) {}
-    
     ~ArrayAccess() override {
         delete array;
-        for (auto idx : indices) delete idx;
+        for(auto idx : indices) delete idx;
     }
-    
-    std::string cpp_code() const override;
-    algo_types infer_type(const Program&) const override;
+    std::string cpp_code(const Program& prog) const override;
+    algo_types infer_type(const Program& prog) const override;
 };
 
 struct ArrayAssignment : public Instruction {
@@ -484,8 +429,8 @@ struct ArrayAssignment : public Instruction {
     std::vector<Expression*> indices;
     Expression* value;
     
-    ArrayAssignment(Expression* arr, std::vector<Expression*> idx, Expression* val)
-        : array(arr), indices(idx), value(val) {}
+    ArrayAssignment(Expression* arr,std::vector<Expression*> idx, Expression* val)
+        : array(arr),indices(idx), value(val) {}
     
     ~ArrayAssignment() override {
         delete array;
@@ -493,15 +438,15 @@ struct ArrayAssignment : public Instruction {
         delete value;
     }
     
-    std::string cpp_code(const std::string& indent) const override;
-	bool validate(const Program&) const override;
+    std::string cpp_code(const std::string& indent, const Program& prog) const override;
+    bool validate(const Program& prog) const override;
 };
 
 
 // Pour la longueur des tableaux
 struct ArrayLength : public UnaryOperation {
     ArrayLength(Expression* tableau) : UnaryOperation(LONGUEUR, tableau) {}
-    algo_types infer_type(const Program&) const override;
+    algo_types infer_type(const Program& prog) const override;
 };
 
 struct ForEach : public Instruction {
@@ -509,17 +454,16 @@ struct ForEach : public Instruction {
     std::string array_name;
     const Instruction* body;
 
-    ForEach(const std::string& loop_var, const std::string& array_name, const Instruction* body)
-        : loop_var(loop_var), array_name(array_name), body(body) {}
+    ForEach(const std::string& loop_var, const std::string& array_name,const Instruction* body)
+        : loop_var(loop_var), array_name(array_name),body(body) {}
 
     ~ForEach() override {
         if (body) delete body;
     }
-	
-	std::string cpp_code(const std::string&) const override;
-	bool validate(const Program&) const override;
+    
+    std::string cpp_code(const std::string& indent, const Program& prog) const override;
+    bool validate(const Program& prog) const override;
 };
-
 struct Parameter {
     std::string name;
     algo_types type;
@@ -528,7 +472,7 @@ struct Parameter {
 
 struct FunctionDefinition : public Instruction {
     std::string name;
-    std::vector<Parameter> params;
+    std::vector<Parameter> params; 
     algo_types return_type;
     Sequence* body;
 
@@ -536,107 +480,93 @@ struct FunctionDefinition : public Instruction {
         : name(n), params(p), return_type(r), body(b) {}
 
     ~FunctionDefinition() override { delete body; }
-    std::string cpp_code(const std::string&) const override;
-	bool validate(const Program&) const override;
+    std::string cpp_code(const std::string& indent, const Program& prog) const override;
+    bool validate(const Program& prog) const override;
 };
 
 struct ProcedureDefinition : public Instruction {
     std::string name;
-    std::vector<Parameter> params;
+    std::vector<Parameter> params; 
     Sequence* body;
 
     ProcedureDefinition(const std::string& n, const std::vector<Parameter>& p, Sequence* b)
         : name(n), params(p), body(b) {}
 
     ~ProcedureDefinition() override { delete body; }
-    std::string cpp_code(const std::string&) const override;
-	bool validate(const Program&) const override;
+    std::string cpp_code(const std::string& indent, const Program& prog) const override;
+    bool validate(const Program& prog) const override;
 };
 
 struct Return : public Instruction {
     Expression* value;
     Return(Expression* v) : value(v) {}
     ~Return() override { delete value; }
-    std::string cpp_code(const std::string&) const override;
-	bool validate(const Program&) const override;
+    
+    std::string cpp_code(const std::string& indent, const Program& prog) const override;
+    bool validate(const Program& prog) const override;
 };
 
 struct FunctionCall : public Expression {
     std::string name;
-    std::vector<Expression*> arguments;
+    std::vector<Expression*> arguments; 
 
-    FunctionCall(const std::string& n, const std::vector<Expression*>& args)
+    FunctionCall(const std::string& n,const std::vector<Expression*>& args)
         : name(n), arguments(args) {}
 
     ~FunctionCall() override {
-        for (auto* arg : arguments)
+        for(auto* arg :arguments)
             delete arg;
     }
-
-    std::string cpp_code() const override; 
+    std::string cpp_code(const Program& prog) const override; 
 };
 
 struct ProcedureCall : public Instruction {
     std::string name;
-    std::vector<Expression*> arguments;
-
+    std::vector<Expression*> arguments; 
     ProcedureCall(const std::string& n, const std::vector<Expression*>& args)
         : name(n), arguments(args) {}
-
+        
     ~ProcedureCall() override {
         for (auto* expr : arguments) delete expr;
     }
-
-    std::string cpp_code(const std::string&) const override;
+    std::string cpp_code(const std::string& indent, const Program& prog) const override;
 };
-
 
 
 
 
 /**********************************
- *                                *
+ * *
  * Definition of the main program *
- *                                *
+ * *
  **********************************/
 
-#include <map>
-#include <string>
-#include <vector>
-#include "ast.hpp"  // for Declaration, Instruction, algo_types
-
 struct Program {
-  // your existing fields
   const std::vector<Declaration*> declarations;
-  const Instruction*      body;
+  const Instruction* body;
   std::vector<Instruction*> functions;
+  std::map<std::string,algo_types> symtab; //table de symboles
 
-  // new symbol‑table mapping var names → their declared types
-  std::map<std::string,algo_types> symtab;
-
-  // ctor: build symtab
-  Program(const std::vector<Declaration*>& decls,
-          Instruction* b)
+  Program(const std::vector<Declaration*>& decls, Instruction* b)
     : declarations(decls), body(b)
   {
     for (auto* d : declarations) {
-  symtab.emplace(d->variable_name, d->type);
-	}
+      symtab.emplace(d->variable_name, d->type);
+    }
   }
 
-  // dtor stays the same
   ~Program() {
     for (auto* d : declarations) delete d;
     for (Instruction* f : functions) delete f;
     if (body) delete body;
   }
 
-  // your existing methods
+  // Commence la chaine reucrisve de génération
   std::string cpp_code() const;
+  
   bool validate() const;
 
-  // helper: given a variable name, return its declared algo_type
-  // you can call this from your parser or from Assignment/ArrayCreation
+  //helper méthode pour trouver symbole
   algo_types lookup_type(const std::string& var) const {
     auto it = symtab.find(var);
     if (it == symtab.end()) {
@@ -645,11 +575,8 @@ struct Program {
     }
     return it->second;
   }
-
-  // (optionally) repurpose infer_type(string) to be identical:
   algo_types infer_type(const std::string& variable) const;
 };
-
 
 
 

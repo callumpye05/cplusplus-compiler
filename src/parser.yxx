@@ -1,14 +1,16 @@
 /**
  * \file parser.yxx
  * \brief Implementation of a parser grammar for the algo language
- * \author Matthieu Perrin 
+ * \author Callum PYE
  * \version 1
- * \date 17-02-2025
+ * \date 25-02-2026
  */
-%debug
+
 
 
 %{
+#include <fstream>
+#include <iostream>
 #include "ast.hpp"
 extern FILE *yyin;
 Program* program;
@@ -19,7 +21,6 @@ std::vector<std::pair<const Expression*, const Instruction*>>
 convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
     std::vector<std::pair<const Expression*, const Instruction*>> result;
     for (const auto& p : vec) {
-        // Assuming Sequence is convertible to Instruction
         result.push_back({ p.first, p.second });
     }
     return result;
@@ -27,18 +28,15 @@ convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
 
 %}
 
-// Tokens used to communicate between the lexer and the parser
-// Returned by the lexer, and used as terminal symbols by the parser
+// Jeton utiliser pour la communication
 %token  ALGORITHME VARIABLES TYPE DEBUT FIN
 %token  SI ALORS SINON TANT QUE POUR FAIRE ALLANT DE AVEC UN PAS A SINONSI TOUT DANS
 %token  AFFECTATION PT_VIRGULE DEUX_POINTS PARENTHESE_G PARENTHESE_D CROCHET_G CROCHET_D VIRGULE
 %token  PLUS MOINS MULTIPLIE ET OU EGAL INFERIEUR
-%token  LITTERAL ID ECRIRE LONGUEUR LIRE NON  TABLEAU_TYPE TABLEAU_CTOR
+%token  LITTERAL ID ECRIRE LONGUEUR LIRE NON  TABLEAU_TYPE TABLEAU_CTOR TABLEAU_DENTIERS LONGUEURV
 %token FONCTION PROCEDURE RETOURNER
 
 
-
-// Ensure SINONSI gets a higher precedence
 %nonassoc CROCHET_G CROCHET_D
 %left SINON 
 %left SINONSI 
@@ -49,7 +47,6 @@ convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
 
 
 			
-// Declaration of the types returned by the actions of the non-terminals
 %union {
     Instruction* instruction;
     Expression* expression;
@@ -78,16 +75,11 @@ convertElseIf(const std::vector<std::pair<Expression*, Sequence*>>& vec) {
 %type <param_list> param_list param_list_nonvide
 %type <function_list> function_list
 %type <instruction> program_start
-%type <sequence> function_block
+%type <sequence> fonction_block
 
 
 
 
-
-
-
-
-// Initial rule of the grammar
 %start program_start
 
 %%
@@ -101,33 +93,24 @@ program_start:
 ;
 
 function_list:
-    /* empty */ { $$ = new std::vector<Instruction*>(); }
+    { $$ = new std::vector<Instruction*>(); }
     | function_list fonction_definition { $$ = $1; $1->push_back($2); }
     | function_list procedure_definition { $$ = $1; $1->push_back($2); }
 ;
 
 
-algo:		ALGORITHME VARIABLES var_declaration DEBUT sequence FIN { program = new Program(*$3, $5); delete $3; }
-;
-
-/*
-var_declaration:                                                        { $$ = new std::vector<Declaration*>(); }
-	|	var_declaration ID DEUX_POINTS TYPE                     { $$ = $1; $$->push_back(new Declaration(*$2, $4)); delete $2; }
-;
-*/
 
 var_declaration:
     { $$ = new std::vector<Declaration*>(); }
     | var_declaration ID DEUX_POINTS type {
-        std::cerr << "parser: Declaring " << *$2 << " as ";
+        std::cerr << "le parser déclare : " << *$2 << " commme ";
         if ($4->kind == algo_types::ARRAY) {
-            std::cerr << "array of ";
-            // Recursive type printing for nested arrays
+            std::cerr << "tableau de ";
             const algo_types* current = $4;
             while (current->kind == algo_types::ARRAY && !current->parameters.empty()) {
                 current = &current->parameters[0];
             }
-            std::cerr << current->to_string();  // Implement this method
+            std::cerr << current->to_string();
         } else {
             std::cerr << $4->to_string();
         }
@@ -150,6 +133,9 @@ type:
     | TABLEAU_TYPE type { 
           $$ = new algo_types(algo_types::ARRAY, {*$2});
           delete $2;
+      }
+    | TABLEAU_DENTIERS {
+        $$ = new algo_types(algo_types::ARRAY, {algo_types::INTEGER}); //pour le cas spécifique avec tableau d'entiers
       }
 ;
 
@@ -178,29 +164,29 @@ autres_conditions:
     }
 ;
 opt_autres_conditions:
-    autres_conditions { $$ = $1; }  // Clauses sinonsi présentes
-    | /* vide */      { $$ = new std::vector<std::pair<Expression*, Sequence*>>(); }  // Aucune clause sinonsi
+    autres_conditions { $$ = $1; }  // sinonsi présent
+    | 	     { $$ = new std::vector<std::pair<Expression*, Sequence*>>(); }  //aucun sinonsi
 ;
 
 opt_sinon:
-    SINON sequence { $$ = $2; }  // Bloc SINON présent
-    | /* vide */   { $$ = nullptr; }  // Pas de SINON
+    SINON sequence { $$ = $2; }  //sinon présent
+    |    { $$ = nullptr; }  //aucun sinon
 ;
 
 fonction_definition:
-    FONCTION ID PARENTHESE_G param_list PARENTHESE_D DEUX_POINTS type function_block FIN FONCTION {
+    FONCTION ID PARENTHESE_G param_list PARENTHESE_D DEUX_POINTS type fonction_block FIN FONCTION {
         $$ = new FunctionDefinition(*$2, *$4, *$7, $8);
         delete $2; delete $4; delete $7;
     }
 ;
 procedure_definition:
-    PROCEDURE ID PARENTHESE_G param_list PARENTHESE_D function_block FIN PROCEDURE {
+    PROCEDURE ID PARENTHESE_G param_list PARENTHESE_D fonction_block FIN PROCEDURE {
         $$ = new ProcedureDefinition(*$2, *$4, $6);
         delete $2; delete $4;
     }
 ;
 param_list:
-    /* vide */ { $$ = new std::vector<Parameter>(); }
+       { $$ = new std::vector<Parameter>(); }
     | param_list_nonvide { $$ = $1; }
 ;
 
@@ -217,7 +203,7 @@ param_list_nonvide:
     }
 ;
 
-function_block:
+fonction_block:
     VARIABLES var_declaration DEBUT sequence {
         $$ = new Sequence();
         for (Declaration* d : *$2)
@@ -241,16 +227,13 @@ commande:
     
     
       array_access AFFECTATION array_creation PT_VIRGULE %prec AFFECTATION {
-    // build the AST node—no program calls here!
-      ArrayAccess* aa = static_cast<ArrayAccess*>($1);
-      ArrayCreation* ac = static_cast<ArrayCreation*>($3);
-
-      $$ = new ArrayAssignment(aa->array, aa->indices, ac);
-
-      // avoid double‑free of the ArrayAccess shell
-      aa->array = nullptr;
-      aa->indices.clear();
-      delete aa;
+      	ArrayAccess* aa = static_cast<ArrayAccess*>($1);
+      	ArrayCreation* ac = static_cast<ArrayCreation*>($3);
+      	$$ = new ArrayAssignment(aa->array, aa->indices, ac);
+      	// avoid double‑free of the ArrayAccess shell
+      	aa->array = nullptr;
+      	aa->indices.clear();
+      	delete aa;
     }
     | array_access AFFECTATION expression PT_VIRGULE {
     	ArrayAccess* aa = static_cast<ArrayAccess*>($1);
@@ -258,7 +241,7 @@ commande:
     	aa->array = nullptr;
     	aa->indices.clear();
     	delete aa;
-}
+	}
     | fonction_definition
     | procedure_definition
     | retour
@@ -274,8 +257,7 @@ commande:
     | POUR ID ALLANT DE expression A expression AVEC UN PAS DE expression FAIRE sequence FIN POUR { $$ = new For(*$2, $5, $7, $12, $14); } //ceci concerne indice choisit par utilisateur
     | POUR TOUT ID DANS ID FAIRE sequence FIN POUR { $$ = new ForEach(*$3, *$5, $7); delete $3; delete $5; }
     | POUR ID ALLANT DE expression A expression FAIRE sequence FIN POUR { $$ = new For(*$2, $5, $7, new Literal(algo_types::INTEGER, "1") , $9); } 
-    | ID AFFECTATION array_creation PT_VIRGULE {
-      	// look up T’s declared type in your var_declaration list:
+    | ID AFFECTATION array_creation PT_VIRGULE {    	
       ArrayCreation* ac = static_cast<ArrayCreation*>($3);
        $$ = new Assignment(*$1, ac);
         delete $1;
@@ -283,70 +265,73 @@ commande:
 ;
 
 longueur_expr:
-    LONGUEUR PARENTHESE_G expression PARENTHESE_D
+     LONGUEURV PARENTHESE_G expression PARENTHESE_D
+        { $$ = new UnaryOperation(UnaryOperation::LONGUEURV, $3); }
+     |LONGUEUR PARENTHESE_G expression PARENTHESE_D
         { $$ = new UnaryOperation(UnaryOperation::LONGUEUR, $3); }
+        
 ;
 
 longueur_terme:
-	LONGUEUR PARENTHESE_G terme PARENTHESE_D %prec FERMETURE_LONGUEUR	{ $$ = new UnaryOperation(UnaryOperation::LONGUEUR, $3); }
+	LONGUEURV PARENTHESE_G expression PARENTHESE_D
+        { $$ = new UnaryOperation(UnaryOperation::LONGUEURV, $3); }
+	|LONGUEUR PARENTHESE_G terme PARENTHESE_D %prec FERMETURE_LONGUEUR	{ $$ = new UnaryOperation(UnaryOperation::LONGUEUR, $3); }
+	
 ;
 
 /* Array Creation */
 array_creation: 
     TABLEAU_CTOR PARENTHESE_G array_dimensions PARENTHESE_D 
     { 
-        algo_types array_type = algo_types(algo_types::INTEGER);  // default, adjust according to context later!
+        algo_types array_type = algo_types(algo_types::INTEGER);
         $$ = new ArrayCreation(array_type, *$3);
         delete $3; 
     }
 ;
-
-
 array_dimensions:
     expression { $$ = new std::vector<Expression*>(); $$->push_back($1); }
 ;
 
-/* Array Access */
 array_access:
     expression CROCHET_G expression CROCHET_D 
     { 
+        std::cerr << "Premier niveau d'accès\n";
         $$ = new ArrayAccess($1, std::vector<Expression*>{ $3 });
     }
-    | array_access CROCHET_G expression CROCHET_D 
-    { 
-        // Cast $1 to ArrayAccess* to access the 'indices' field.
-        ArrayAccess* aa = static_cast<ArrayAccess*>($1);
-        aa->indices.push_back($3);
-        $$ = $1; 
-    }
+  | array_access CROCHET_G expression CROCHET_D {
+    	ArrayAccess* aa = dynamic_cast<ArrayAccess*>($1);
+    	if (aa) {
+        	aa->indices.push_back($3);
+        	$$ = aa;
+    	} 
+    	else {
+        $$ = new ArrayAccess($1, std::vector<Expression*>{ $3 });
+    	}
+	}
+
 ;
 
 
 
-expression: disjonction { std::cerr << "Parser: Processing expression\n" ; $$ = $1; }
+
+expression: disjonction { std::cerr << "Parser: Analyse d'expression\n" ; $$ = $1; }
     | array_creation
     | array_access
     | longueur_expr
-    | ID PARENTHESE_G expression_list PARENTHESE_D {
-        $$ = new FunctionCall(*$1, *$3);
-        delete $1; delete $3;
-    } 
-    | ID PARENTHESE_G PARENTHESE_D {
-        $$ = new FunctionCall(*$1, std::vector<Expression*>());
-        delete $1;
-    }
+    | ID PARENTHESE_G expression_list PARENTHESE_D { $$ = new FunctionCall(*$1, *$3); delete $1; delete $3; } 
+    | ID PARENTHESE_G PARENTHESE_D { $$ = new FunctionCall(*$1, std::vector<Expression*>()); delete $1; }
 ;
 
-disjonction: disjonction OU conjonction { std::cerr << "Parser: Processing OU\n"; $$ = new BinaryOperation(BinaryOperation::OU, $1, $3); }
-           | conjonction { std::cerr << "Parser: Processing conjonction\n"; $$ = $1; }
+disjonction: disjonction OU conjonction { std::cerr << "Parser: Analyse un 'ou'\n"; $$ = new BinaryOperation(BinaryOperation::OU, $1, $3); }
+           | conjonction { std::cerr << "Parser: Analyse de conjonction\n"; $$ = $1; }
 ;
 
-conjonction: conjonction ET negation { std::cerr << "Parser: Processing ET\n"; $$ = new BinaryOperation(BinaryOperation::ET, $1, $3); }
-           | negation { std::cerr << "Parser: Processing negation\n"; $$ = $1; }
+conjonction: conjonction ET negation { std::cerr << "Parser: Analyse du ET\n"; $$ = new BinaryOperation(BinaryOperation::ET, $1, $3); }
+           | negation { std::cerr << "Parser: Analyse de la negation\n"; $$ = $1; }
 ;
 
-negation: NON negation { std::cerr << "Parser: Processing NON\n"; $$ = new UnaryOperation(UnaryOperation::NON, $2); }
-        | comparison { std::cerr << "Parser: Processing comparison\n"; $$ = $1; }
+negation: NON negation { std::cerr << "Parser: Analyse du  NON\n"; $$ = new UnaryOperation(UnaryOperation::NON, $2); }
+        | comparison { std::cerr << "Parser: Analyse de  comparaison\n"; $$ = $1; }
 ;
 
 comparison:	somme EGAL somme				        { $$ = new BinaryOperation(BinaryOperation::EGAL, $1, $3); }
@@ -369,11 +354,12 @@ oppose:		MOINS oppose					        { $$ = new UnaryOperation(UnaryOperation::MOIN
 
 
 
-terme:		LITTERAL				                { $$ = $1; }
+terme:	
+	array_access               { $$ = $1; }
+	|	LITTERAL				                { $$ = $1; }
 	|	ID				                        { $$ = new Identifier(*$1); delete $1;}
 	|	longueur_terme
 	|	PARENTHESE_G expression PARENTHESE_D                    { $$ = $2; }
-	|	array_access
 ;
 
 %%
@@ -382,14 +368,36 @@ void yyerror(const char *s) {
   printf("%s\n",s);
 }
 
-int main(int, char *argv[]) {
-  extern int yydebug;
-  yydebug = 1;
-  yyin=fopen(argv[1],"r");
-  yyparse();
+void save_to_file(const std::string& filename, const Program& prog) {
+    std::ofstream outfile(filename, std::ios::out | std::ios::trunc);
+    if (outfile.is_open()) {
+        outfile << prog.cpp_code();
+        outfile.close();
+        std::cerr << "Compilation réussie! Code généré dans : " << filename << std::endl;
+    } else {
+        std::cerr << "Erreur :Impossible d'ouvrir " << filename << " pour l'écriture." << std::endl;
+    }
+}
 
+int main(int argc, char *argv[]) {
+  if (argc < 2) {
+      std::cerr << "Usage:"<< argv[0] << " input.algo [output.cpp]" << std::endl;
+      return 1;
+  }
+
+  yyin = fopen(argv[1], "r");
+  if (!yyin) {
+      std::cerr << "Erreur :Impossible d'ouvrir le fichier source " << argv[1] << std::endl;
+      return 1;
+  }
+
+  yyparse();
   if(program && program->validate()) {
-      std::cout << program->cpp_code();
+      std::string out_name = (argc > 2) ? argv[2] : "output.cpp";
+      save_to_file(out_name, *program);
       return 0;
-  } else return 1;
+  } else {
+      std::cerr << "La validation du programme a échoué" << std::endl;
+      return 1;
+  }
 }

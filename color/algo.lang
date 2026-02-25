@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language id="algo" name="Algo" version="2.0" _section="Source">
+  <metadata>
+    <property name="mimetypes">text/x-algo</property>
+    <property name="globs">*.algo</property>
+  </metadata>
+
+	<styles>
+  <style id="keyword"     name="Keyword"     map-to="def:keyword"/>
+  <style id="identifier"  name="Identifier"  map-to="def:identifier"/>
+  <style id="comment"     name="Comment"     map-to="def:comment"/>
+  <style id="type"        name="Type"        map-to="def:type"/>
+  <style id="string"      name="String"      map-to="def:string"/>
+  <style id="number"      name="Number"      map-to="def:number"/>
+	</styles>
+
+
+  <definitions>
+
+    <context id="algo">
+      <include>
+        
+        <context ref="keyword"/>
+        <context ref="identifier"/>
+	<context ref="types"/>
+        <context ref="c-comments"/>
+        <context ref="cpp-comments"/> 
+         
+
+      </include>
+    </context>
+
+    <!-- Mots-clés du langage -->
+    <context id="keyword" style-ref="keyword">
+  <keyword>algorithme</keyword>
+  <keyword>variables</keyword>
+  <keyword>début</keyword>
+  <keyword>fin</keyword>
+  <keyword>si</keyword>
+  <keyword>alors</keyword>
+  <keyword>sinon</keyword>
+  <keyword>sinonsi</keyword>
+  <keyword>tant</keyword>
+  <keyword>que</keyword>
+  <keyword>pour</keyword>
+  <keyword>faire</keyword>
+  <keyword>retourner</keyword>
+  <keyword>fonction</keyword>
+  <keyword>procédure</keyword>
+  <keyword>dans</keyword>
+  <keyword>avec</keyword>
+  <keyword>un</keyword>
+  <keyword>pas</keyword>
+  <keyword>à</keyword>
+  <keyword>de</keyword>
+  <keyword>et</keyword>
+  <keyword>ou</keyword>
+  <keyword>tout</keyword>
+  <keyword>non</keyword>
+  <keyword>écrire</keyword>
+  <keyword>lire</keyword>
+  <keyword>longueur</keyword>
+  <keyword>allant</keyword>
+    </context>
+    
+    <context id="literals" style-ref="number">
+  <keyword>vrai</keyword>
+  <keyword>faux</keyword>
+    </context>
+
+
+
+    <!-- Noms de variables et de fonctions -->
+    <context id="identifier" style-ref="def:identifier">
+      <match extended="true">
+        \b[A-Za-z_][A-Za-z_0-9]*\b
+      </match>
+    </context>
+    
+    <!-- Types de données -->
+    <context id="types" style-ref="type">
+  <keyword>entier</keyword>
+  <keyword>booléen</keyword>
+  <keyword>chaîne</keyword>
+  <keyword>caractère</keyword>
+  <keyword>entiers</keyword>
+  <keyword>booléens</keyword>
+  <keyword>chaînes</keyword>
+  <keyword>caractères</keyword>
+    </context>
+
+
+    <!-- Commentaires -->
+    <context id="c-comments" end-at-line-end="true" style-ref="def:comment">
+      <start>//</start>
+    </context>
+    <context id="cpp-comments" style-ref="def:comment">
+      <start>/\*</start>
+      <end>\*/</end>
+    </context>
+  </definitions>
+</language>

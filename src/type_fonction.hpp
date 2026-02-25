@@ -1,9 +1,9 @@
 #ifndef TYPE_HELPERS_HPP
 #define TYPE_HELPERS_HPP
 
-#include "ast.hpp"  // This should define algo_types and its members
+#include "ast.hpp"  
 
-// Convert a type_kind to a string representation.
+
 inline std::string type_to_string(algo_types::type_kind tk) {
     switch(tk) {
         case algo_types::BOOLEAN:   return "bool";
@@ -16,9 +16,8 @@ inline std::string type_to_string(algo_types::type_kind tk) {
     }
 }
 
-// Retrieve the element type of an array type.
-// (This implementation assumes that algo_types has a member 'parameters'
-// that is a vector of algo_types. Adjust according to your actual definition.)
+
+//Afin de retrouver le types des elements d'un tableau 
 inline algo_types get_array_element_type(const algo_types &type) {
     if (type.kind == algo_types::ARRAY && !type.parameters.empty()){
         return type.parameters[0];

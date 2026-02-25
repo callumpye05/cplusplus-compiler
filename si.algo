@@ -1,3 +1,19 @@
+fonction somme(tab : tableau de entier) : entier
+variables
+    i : entier
+    total : entier
+début
+    total <- 0;
+    pour i allant de 0 à longueur(tab) - 1 faire
+        total <- total + tab[i];
+    fin pour
+    
+    retourner total;
+fin fonction
+
+
+
+
 procedure afficher_somme(tab : tableau de entier)
 variables
   resultat : entier

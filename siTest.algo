@@ -1,0 +1,15 @@
+algorithme
+variables
+T : tableau de tableaux d'entiers
+i : entier
+j : entier
+début
+	T <- Tableau(10);
+	pour i allant de 1 à Longueur(T) faire
+		T[i] <- Tableau(10);
+		pour j allant de 1 à Longueur(T[i]) faire
+			T[i][j] <- i+j;
+		fin pour
+	fin pour
+	
+fin

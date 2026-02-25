@@ -2,9 +2,9 @@
 /**
  * \file type_validation.cpp
  * \brief Implementation of the infer_type() and validate() methods 
- * \author Matthieu Perrin 
- * \version 1
- * \date 17-02-2025
+ * \author Callum PYE
+ * \version 2
+ * \date 25-04-2025
  */
 
 #include "ast.hpp"
@@ -13,7 +13,7 @@
 
 /***********************************************************
  *                                                         *
- * Definition of the infer_type method for the expressions *
+ * Definition de infer_type pour les méthodes              *
  *                                                         *
  ***********************************************************/
 
@@ -34,8 +34,16 @@ algo_types UnaryOperation::infer_type(const Program& context) const {
   if(argument_type.kind == algo_types::STRING || argument_type.kind == algo_types::ARRAY)
     return algo_types(algo_types::INTEGER);
 
-  std::cerr << "Erreur : la fonction longueur doit être utilisée avec une chaîne de caractères ou un tableau" << std::endl;
+  std::cerr << "Erreur : la fonction longueur doit être utilisée avec une chaîne de caractères" << std::endl;
   return algo_types(algo_types::ERROR);
+  
+  
+  case LONGUEURV:
+  	if(argument_type.kind == algo_types::ARRAY) 
+  		return algo_types(algo_types::INTEGER);
+  	std::cerr << "Erreur : la fonction Longueur doit être utilisée avec un tableau" << std::endl;
+  	return algo_types(algo_types::ERROR);
+  	
 
 
   case MOINS:
@@ -59,7 +67,7 @@ algo_types ArrayCreation::infer_type(const Program& program) const {
         return algo_types(algo_types::ERROR);
     }
 
-    // 2) Every dimension expression must be an integer
+    //dimensions doivent etre un entier 
     for (size_t i = 0; i < dimensions.size(); ++i) {
         algo_types dim_t = dimensions[i]->infer_type(program);
         if (dim_t.kind != algo_types::INTEGER) {
@@ -69,36 +77,30 @@ algo_types ArrayCreation::infer_type(const Program& program) const {
         }
     }
 
-    // 3) Return the stored array_type (set earlier by the parser or assignment)
+    //retourne le type du tableau stocker par le parser 
     return array_type;
 }
 
 algo_types ArrayAccess::infer_type(const Program& ctx) const {
-  // 1) what am I indexing?
   algo_types base = array->infer_type(ctx);
-  // 2) every index must be integer
   for (auto* idx : indices) {
     if (idx->infer_type(ctx) != algo_types::INTEGER) {
-      std::cerr << "Erreur : l'indice d'un tableau/doit être un entier\n";
+      std::cerr << "Erreur : l'indice d'un tableau doit etre un entier\n";
       return algo_types::ERROR;
     }
   }
-
-  // 3a) if it was a string, exactly one index → char
   if (base.kind == algo_types::STRING) {
     if (indices.size() != 1) {
-      std::cerr << "Erreur : trop d'indices pour une chaîne\n";
+      std::cerr << "Erreur :trop d'indices pour une chaîne\n";
       return algo_types::ERROR;
     }
     return algo_types(algo_types::CHARACTER);
   }
-
-  // 3b) if it was an array, peel off one layer per index
   if (base.kind == algo_types::ARRAY) {
     algo_types element = base;
     for (size_t i = 0; i < indices.size(); ++i) {
       if (element.parameters.empty()) {
-        std::cerr << "Erreur : trop d'indices pour accéder à un élément du tableau\n";
+        std::cerr << "Erreur:trop d'indices pour accéder à un élément du tableau\n";
         return algo_types::ERROR;
       }
       element = element.parameters[0];
@@ -106,28 +108,23 @@ algo_types ArrayAccess::infer_type(const Program& ctx) const {
     return element;
   }
 
-  std::cerr << "Erreur : accès par [] sur un type non‑tableau/non‑chaîne\n";
+  std::cerr << "Erreur: accès par [] sur un type qui n'est pas une chaine ou un tableau \n";
   return algo_types::ERROR;
 }
 
 bool ArrayAssignment::validate(const Program& program) const {
-    // 1) Infer the type of the array being accessed
     algo_types array_t = array->infer_type(program);
     if (array_t.kind != algo_types::ARRAY) {
-        std::cerr << "Erreur : l'affectation doit se faire sur un tableau." << std::endl;
+        std::cerr << "Erreur : l'affectation doit etre sur un tableau" << std::endl;
         return false;
     }
-
-    // 2) Peel off one layer per index to get the element type
     algo_types elem_t = array_t;
     for (auto* idx_expr : indices) {
-        // a) check index is integer
         algo_types idx_t = idx_expr->infer_type(program);
         if (idx_t.kind != algo_types::INTEGER) {
-            std::cerr << "Erreur : l'indice du tableau doit être un entier." << std::endl;
+            std::cerr << "Erreur: l'indice du tableau doit être un entier." << std::endl;
             return false;
         }
-        // b) peel
         if (elem_t.parameters.empty()) {
             std::cerr << "Erreur : trop d'indices pour accéder à un élément du tableau." << std::endl;
             return false;
@@ -140,69 +137,11 @@ bool ArrayAssignment::validate(const Program& program) const {
 algo_types ArrayLength::infer_type(const Program& context) const {
     algo_types array_type = argument->infer_type(context);
     if (array_type.kind != algo_types::ARRAY && array_type != algo_types::STRING) {
-        std::cerr << "Erreur : longueur appliquée à un non-tableau" << std::endl;
+        std::cerr << "Erreur : longueur appliquée à un type qui n'est pas un tableau" << std::endl;
         return algo_types::ERROR;
     }
     return algo_types::INTEGER;
 }
-
-
-
-
-/*
- *algo_types ArrayType::infer_type(const Program& program) const {
-  return algo_types::ARRAY;
-}
- */
-/*
-bool is_array_type(const algo_types& type) {
-  return std::holds_alternative<ArrayType>(type);
-}
-
-algo_types get_array_element_type(const algo_types& type) {
-  if (is_array_type(type)) {
-    return std::get<ArrayType>(type).element_type;
-  }
-  return base_types::ERROR;
-}
-
-algo_types ArrayCreation::infer_type(const Program& program) const {
-  algo_types size_type = taille->infer_type(program);
-  if(size_type != algo_types::INTEGER) {
-    std::cerr << "Erreur: taille du tableau doit etre un entier par défaut " << std::endl;
-    return algo_types::ERROR;
-  }
-  return ArrayType(type);
-}
-
-algo_types ArrayAccess::infer_type(const Program& program) const {
-  algo_types array_type = tableau->infer_type(program);
-  algo_types index_type = indice->infer_type(program);
-  
-  if(array_type != algo_types::ARRAY) {
-    std::cerr << "Erreur : l'accès à un tableau doit se faire sur un tableau" << std::endl;
-    return algo_types::ERROR;
-  }
-  
-  if(index_type != algo_types::INTEGER) {
-    std::cerr << "Erreur : l'indice d'un tableau doit être un entier" << std::endl;
-    return algo_types::ERROR;
-  }
-  
-  return get_array_element_type(array_type);
-}
-
-algo_types ArrayLength::infer_type(const Program& program) const {
-  algo_types array_type = tableau->infer_type(program);
-  
-  if(array_type != algo_types::ARRAY) {
-    std::cerr << "Erreur : la longueur doit être appliquée à un tableau" << std::endl;
-    return algo_types::ERROR;
-  }
-  
-  return algo_types::INTEGER;
-}
-*/
 algo_types BinaryOperation::infer_type(const Program& context) const {
   algo_types left_type  = left->infer_type(context);
   algo_types right_type = right->infer_type(context);
@@ -279,86 +218,52 @@ bool Sequence::validate(const Program& context) const {
   }
   return true;
 }
- /*
-bool types_equal(const algo_types& a, const algo_types& b) {
-  if (is_array_type(a) && is_array_type(b)) {
-    return types_equal(get_array_element_type(a), get_array_element_type(b));
-  }
-  return a == b;
-}
-*/
-/*
-bool Assignment::validate(const Program& context) const {
-  algo_types variable_type = context.infer_type(variable);
-  algo_types expression_type = value->infer_type(context);
-  if(variable_type != expression_type) {
-    std::cerr << "Erreur : l'affectation de " << variable << " n'est pas du bon type" << std::endl;
-    return false;
-  }
-  return true;
-}
-*/
-bool Assignment::validate(const Program& context) const {
-    // 1) What type did we declare on the LHS?
-    algo_types variable_type = context.infer_type(variable);
 
-    // 2) If the RHS is an ArrayCreation, give it the LHS’s declared type
+bool Assignment::validate(const Program& context) const {
+    algo_types variable_type = context.infer_type(variable);
     if (auto* ac_const = dynamic_cast<const ArrayCreation*>(value)) {
-        // now drop the const so we can assign to its array_type
         auto* ac = const_cast<ArrayCreation*>(ac_const);
         ac->array_type = variable_type;
     }
-
-    // 3) Now infer the RHS’s type correctly
     algo_types expression_type = value->infer_type(context);
-
-    // 4) Compare
     if (variable_type != expression_type) {
-        std::cerr << "Erreur : l'affectation de " << variable 
+        std::cerr << "erreur :l'affectation de " << variable 
                   << " n'est pas du bon type." << std::endl;
         return false;
     }
     return true;
 }
 
-
 bool Read::validate(const Program& context) const {
   algo_types variable_type = context.infer_type(variable);
   if(variable_type != algo_types::STRING) {
-    std::cerr << "Erreur : lire retourne une chaîne de caractères" << std::endl;
+    std::cerr << "Erreur: lire retourne une chaine de caractères" << std::endl;
     return false;
   }
   return true;
 }
 
 bool If::validate(const Program& context) const {
-    // Validation de la condition principale
     algo_types condition_type = condition->infer_type(context);
     if (condition_type != algo_types::BOOLEAN) {
-        std::cerr << "Erreur : la condition doit être une expression booléenne" << std::endl;
+        std::cerr << "Erreur :la condition doit etre une expression booléenne" << std::endl;
         return false;
     }
-
-    // Validation du bloc ALORS
     if (!thenBranch->validate(context)) {
-        std::cerr << "Erreur : le bloc ALORS est invalide" << std::endl;
+        std::cerr << "Erreur :le bloc ALORS est invalide" << std::endl;
         return false;
     }
-
-    // Validation des clauses sinonsi
     for (const auto& elseIf : elseIfs) {
         algo_types elseIfConditionType = elseIf.first->infer_type(context);
         if (elseIfConditionType != algo_types::BOOLEAN) {
-            std::cerr << "Erreur : la condition d'une clause sinonsi doit être une expression booléenne" << std::endl;
+            std::cerr << "Erreur :la condition d'un sinonsi doit etre une expression booléenne" << std::endl;
             return false;
         }
         if (!elseIf.second->validate(context)) {
-            std::cerr << "Erreur : le bloc d'une clause sinonsi est invalide" << std::endl;
+            std::cerr << "Erreur : le bloc d'un sinonsi est invalide" << std::endl;
             return false;
         }
     }
-
-    // Validation du bloc SINON (s'il existe)
     if (elseBranch && !elseBranch->validate(context)) {
         std::cerr << "Erreur : le bloc SINON est invalide" << std::endl;
         return false;
@@ -370,40 +275,35 @@ bool If::validate(const Program& context) const {
 bool While::validate(const Program& context) const {
   algo_types condition_type = condition->infer_type(context);
   if(condition_type != algo_types::BOOLEAN) {
-    std::cerr << "Erreur : la condition doit être une expression booléenne" << std::endl;
+    std::cerr << "Erreur :la condition doit être une expression booléenne" << std::endl;
     return false;
   }
   return body->validate(context);
 }
 
 bool For::validate(const Program& context) const {
-    // Validate the start, end, and step expressions
     algo_types start_type = start->infer_type(context);
     algo_types end_type = end->infer_type(context);
     algo_types step_type = step->infer_type(context);
-
-    // Ensure start, end, and step are integers
     if (start_type != algo_types::INTEGER) {
-        std::cerr << "Erreur : la valeur de début doit être un entier" << std::endl;
+        std::cerr << "Erreur :la valeur de début doit être un entier" << std::endl;
         return false;
     }
     if (end_type != algo_types::INTEGER) {
-        std::cerr << "Erreur : la valeur de fin doit être un entier" << std::endl;
+        std::cerr << "Erreur: la valeur de fin doit être un entier" << std::endl;
         return false;
     }
     if (step_type != algo_types::INTEGER) {
-        std::cerr << "Erreur : le pas doit être un entier" << std::endl;
+        std::cerr << "Erreur: le pas doit être un entier" << std::endl;
         return false;
     }
-
-    // Validate the body of the loop
     return body->validate(context);
 }
 
 bool ForEach::validate(const Program& p) const  {
         auto t = p.lookup_type(array_name);
         if (t.kind != algo_types::ARRAY) {
-            std::cerr << "Erreur : « " << array_name << " » n’est pas un tableau.\n";
+            std::cerr << "Erreur :  " <<array_name<< " n’est pas un tableau.\n";
             return false;
         }
         return body->validate(p);
@@ -418,26 +318,24 @@ bool ProcedureDefinition::validate(const Program& context) const {
 }
 
 bool Return::validate(const Program& context) const {
-    // Minimal check: we return something valid (no ERROR type)
     return value->infer_type(context) != algo_types::ERROR;
 }
 
 
-
-
-
 /********************************************************************
  *                                                                  *
- * Definition of the type and validate methods for the Program type *
+ * Définition des types et methodes                                 *
  *                                                                  *
  ********************************************************************/
 
 algo_types Program::infer_type(const std::string& variable) const {
-  for(const Declaration* declaration : declarations)
-    if(declaration->variable_name == variable)
-      return declaration->type; 
-  std::cerr << "Erreur : la variable " << variable << "n'est pas déclarée" << std::endl;
-  return algo_types::ERROR;
+    auto it = symtab.find(variable);
+    if (it != symtab.end()) {
+        return it->second;
+    }
+    
+    std::cerr << "Erreur : la variable " << variable << " n'est pas déclarée dans le contexte actuel" << std::endl;
+    return algo_types(algo_types::ERROR);
 }
 
 bool Program::validate() const {
